@@ -138,11 +138,13 @@ def GetMissionXML():
                         </Inventory>
                     </AgentStart>
                     <AgentHandlers>
+                        <ChatCommands />
                         <RewardForCollectingItem>
                             <Item reward="1" type="diamond"/>
                         </RewardForCollectingItem>
                         <RewardForTouchingBlockType>
-                            <Block type="stone" reward="100"/>
+                            <Block type="lava" reward="100"/>
+                            <Block type="glass" reward="-100"/>
                         </RewardForTouchingBlockType>
                         <RewardForMissionEnd>
                             <Reward description="found_goal" reward="1000" />
@@ -407,6 +409,7 @@ def train(agent_host):
             # Take step
             if CUR_POS == TEMP_POS:
                 agent_host.sendCommand(command)
+                agent_host.sendCommand("chat "+command)
                 episode_step += 1
                 global_step += 1
             # print("==", command)
