@@ -408,8 +408,9 @@ def train(agent_host):
             command = ACTION_DICT[action_idx]
             # Take step
             if CUR_POS == TEMP_POS:
+                agent_host.sendCommand("chat Next: "+command)
+                time.sleep(.1)
                 agent_host.sendCommand(command)
-                agent_host.sendCommand("chat "+command)
                 episode_step += 1
                 global_step += 1
             # print("==", command)
