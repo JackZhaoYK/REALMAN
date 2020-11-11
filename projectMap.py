@@ -171,7 +171,7 @@ def GetMissionXML():
 
 def falling_reward(CUR_POS, PREV_POS):
     falldown= PREV_POS[1] - CUR_POS[1] 
-    return -1000 if falldown > 15 else falldown/3
+    return -1000 if falldown >= 15 else falldown/3
 
 def get_action(obs, q_network, epsilon, allow_break_action):
     """
@@ -250,7 +250,7 @@ def get_observation(world_state):
         observation: <np.array>
     """
     obs = np.zeros((15, OBS_SIZE*2+1, OBS_SIZE*2+1))
-
+    CUR_POS = (0,0,0)
     while world_state.is_mission_running:
         time.sleep(0.1)
         world_state = agent_host.getWorldState()
