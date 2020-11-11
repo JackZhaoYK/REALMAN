@@ -25,8 +25,8 @@ SIZE = 50
 REWARD_DENSITY = .1
 PENALTY_DENSITY = .02
 OBS_SIZE = 20
-MAX_EPISODE_STEPS = 100
-MAX_GLOBAL_STEPS = 10000
+MAX_EPISODE_STEPS = 200
+MAX_GLOBAL_STEPS = 20000
 REPLAY_BUFFER_SIZE = 10000
 EPSILON_DECAY = .999
 MIN_EPSILON = .1
@@ -402,12 +402,12 @@ def train(agent_host):
         TEMP_POS = CUR_POS
         # Run episode
         while world_state.is_mission_running:
-            # Get action
-            allow_break_action = obs[1, int(OBS_SIZE/2)-1, int(OBS_SIZE/2)] == 1
-            action_idx = get_action(obs, q_network, epsilon, allow_break_action)
-            command = ACTION_DICT[action_idx]
             # Take step
             if CUR_POS == TEMP_POS:
+                # Get action
+                allow_break_action = obs[1, int(OBS_SIZE/2)-1, int(OBS_SIZE/2)] == 1
+                action_idx = get_action(obs, q_network, epsilon, allow_break_action)
+                command = ACTION_DICT[action_idx]
                 agent_host.sendCommand("chat Next: "+command)
                 time.sleep(.1)
                 agent_host.sendCommand(command)
