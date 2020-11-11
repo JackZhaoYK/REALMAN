@@ -25,8 +25,8 @@ SIZE = 50
 REWARD_DENSITY = .1
 PENALTY_DENSITY = .02
 OBS_SIZE = 20
-MAX_EPISODE_STEPS = 30000
-MAX_GLOBAL_STEPS = 100000000
+MAX_EPISODE_STEPS = 100
+MAX_GLOBAL_STEPS = 10000
 REPLAY_BUFFER_SIZE = 10000
 EPSILON_DECAY = .999
 MIN_EPSILON = .1
@@ -40,11 +40,6 @@ ACTION_DICT = {
     0: 'move 1',  # Move one block forward
     1: 'turn 1',  # Turn 90 degrees to the right
     2: 'turn -1',  # Turn 90 degrees to the left
-    3: 'move 1',  # Move one block forward
-    4: 'move 1',  # Move one block forward
-    5: 'move 1',  # Move one block forward
-    6: 'move 1',  # Move one block forward
-
 }
 
 
@@ -192,7 +187,7 @@ def get_action(obs, q_network, epsilon, allow_break_action):
     #-------------------------------------
     if np.random.ranf() <= epsilon:
 
-        return np.random.choice([0,1,2,3,4,5,6])
+        return np.random.choice([0,1,2])
 
     # Prevent computation graph from being calculated
     with torch.no_grad():
@@ -201,8 +196,8 @@ def get_action(obs, q_network, epsilon, allow_break_action):
         action_values = q_network(obs_torch)
 
         # Remove attack/mine from possible actions if not facing a diamond
-        if not allow_break_action:
-            action_values[0, 3] = -float('inf')  
+        # if not allow_break_action:
+        #     action_values[0, 2] = -float('inf')  
 
             # Select action with highest Q-value
         action_idx = torch.argmax(action_values).item()
@@ -260,17 +255,17 @@ def get_observation(world_state):
         if world_state.number_of_observations_since_last_state > 0:
             # First we get the json from the observation API
             msg = world_state.observations[-1].text
-            print(len(world_state.observations))
+            # print(len(world_state.observations))
             observations = json.loads(msg)
             # print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
-            print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
+            # print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
             CUR_POS = (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos']))
             
             # Get observation
-            print(observations)
+            # print(observations)
             grid = observations['floorAll']
             grid_binary = [1 if x == 'diamond_ore' else 0 for x in grid]
-            print(grid_binary)
+            # print(grid_binary)
             obs = np.reshape(grid_binary, (15, OBS_SIZE*2+1, OBS_SIZE*2+1))
             # print(obs)
             # Rotate observation with orientation of agent
@@ -412,7 +407,9 @@ def train(agent_host):
             # Take step
             if CUR_POS == TEMP_POS:
                 agent_host.sendCommand(command)
-            print("==", command)
+                episode_step += 1
+                global_step += 1
+            # print("==", command)
                 # time.sleep(2)
             # time.sleep(5)
 
@@ -425,7 +422,7 @@ def train(agent_host):
 
             # We have to manually calculate terminal state to give malmo time to register the end of the mission
             # If you see "commands connection is not open. Is the mission running?" you may need to increase this
-            episode_step += 1
+            # episode_step += 1
             if episode_step >= MAX_EPISODE_STEPS:
                 done = True
                 time.sleep(2)  
@@ -446,10 +443,10 @@ def train(agent_host):
             # Get falling reward
             # if (PREV_POS[1] - CUR_POS[1]) % 3 == 0:
             if CUR_POS == TEMP_POS:
-                print(PREV_POS, CUR_POS)
+                # print(PREV_POS, CUR_POS)
                 reward += falling_reward(CUR_POS, PREV_POS)
                 PREV_POS = CUR_POS
-                print("+++++", reward)
+                # print("+++++", reward)
             episode_return += reward
 
             # Store step in replay buffer
@@ -457,7 +454,7 @@ def train(agent_host):
             obs = next_obs
 
             # Learn
-            global_step += 1
+            # global_step += 1
             if global_step > START_TRAINING and global_step % LEARN_FREQUENCY == 0:
                 batch = prepare_batch(replay_buffer)
                 loss = learn(batch, optim, q_network, target_network)
