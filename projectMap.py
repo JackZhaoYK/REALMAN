@@ -25,8 +25,8 @@ SIZE = 50
 REWARD_DENSITY = .1
 PENALTY_DENSITY = .02
 OBS_SIZE = 5
-MAX_EPISODE_STEPS = 300
-MAX_GLOBAL_STEPS = 10000
+MAX_EPISODE_STEPS = 30000
+MAX_GLOBAL_STEPS = 100000000
 REPLAY_BUFFER_SIZE = 10000
 EPSILON_DECAY = .999
 MIN_EPSILON = .1
@@ -37,13 +37,13 @@ LEARNING_RATE = 1e-4
 START_TRAINING = 500
 LEARN_FREQUENCY = 1
 ACTION_DICT = {
-    0: ['move 1'],  # Move one block forward
-    1: ['turn 1','turn 1','move 1'],  # Turn 90 degrees to the right
-    2: ['turn -1','turn -1','move 1'],  # Turn 90 degrees to the left
-    3: ['move 1'],  # Move one block forward
-    4: ['move 1'],  # Move one block forward
-    5: ['move 1'],  # Move one block forward
-    6: ['move 1'],  # Move one block forward
+    0: 'move 1',  # Move one block forward
+    1: 'turn 1',  # Turn 90 degrees to the right
+    2: 'turn -1',  # Turn 90 degrees to the left
+    3: 'move 1',  # Move one block forward
+    4: 'move 1',  # Move one block forward
+    5: 'move 1',  # Move one block forward
+    6: 'move 1',  # Move one block forward
 
 }
 
@@ -149,7 +149,7 @@ def GetMissionXML():
                         <RewardForTouchingBlockType>
                             <Block type="stone" reward="100"/>
                         </RewardForTouchingBlockType>
-                        <RewardForMissionEnd>
+                        <RewardForMissionEnd rewardForDeath="-10000">
                             <Reward description="found_goal" reward="1000" />
                         </RewardForMissionEnd>
                         <DiscreteMovementCommands/>
@@ -257,7 +257,7 @@ def get_observation(world_state):
             # First we get the json from the observation API
             msg = world_state.observations[-1].text
             observations = json.loads(msg)
-            print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
+            # print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
 
             # Get observation
             grid = observations['floorAll']
@@ -397,14 +397,7 @@ def train(agent_host):
             allow_break_action = obs[1, int(OBS_SIZE/2)-1, int(OBS_SIZE/2)] == 1
             action_idx = get_action(obs, q_network, epsilon, allow_break_action)
             command = ACTION_DICT[action_idx]
-            for i in command:
-                if i=="turn 1":
-                    print("Turn Right")
-                if i=="move 1":
-                    print("Move")
-                if i=="turn -1":
-                    print("Turn Left")
-                agent_host.sendCommand(i)
+            agent_host.sendCommand(command)
                 # time.sleep(2)
             # time.sleep(5)
 
@@ -413,7 +406,7 @@ def train(agent_host):
             # agent_host.sendCommand(command)
 
             # If your agent isn't registering reward you may need to increase this
-            time.sleep(.1)
+            time.sleep(.5)
 
             # We have to manually calculate terminal state to give malmo time to register the end of the mission
             # If you see "commands connection is not open. Is the mission running?" you may need to increase this
