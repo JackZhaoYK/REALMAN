@@ -19,13 +19,13 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 cur_reward = 0
-# prev_position = 
 # Hyperparameters
+
 SIZE = 50
 REWARD_DENSITY = .1
 PENALTY_DENSITY = .02
 OBS_SIZE = 5
-MAX_EPISODE_STEPS = 300
+MAX_EPISODE_STEPS = 10000
 MAX_GLOBAL_STEPS = 10000
 REPLAY_BUFFER_SIZE = 10000
 EPSILON_DECAY = .999
@@ -37,15 +37,13 @@ LEARNING_RATE = 1e-4
 START_TRAINING = 500
 LEARN_FREQUENCY = 1
 ACTION_DICT = {
-    0: ['move 1'],  # Move one block forward
-    1: ['turn 1','turn 1','move 1'],  # Turn 90 degrees to the right
-    2: ['turn -1','turn -1','move 1'],  # Turn 90 degrees to the left
-    3: ['move 1'],  # Move one block forward
-    4: ['move 1'],  # Move one block forward
-    5: ['move 1'],  # Move one block forward
-    6: ['move 1'],  # Move one block forward
-
+    0: 'move 1',  # Move one block forward
+    1: 'turn 1',  # Turn 90 degrees to the right
+    2: 'turn -1',  # Turn 90 degrees to the left
+    3: 'move 1',
+    4: 'move 1'
 }
+
 
 
 # Q-Value Network
@@ -169,6 +167,10 @@ def GetMissionXML():
             </Mission>'''
 
 
+def falling_reward(CUR_POS, PREV_POS):
+    falldown= PREV_POS[1] - CUR_POS[1] 
+    return -1000 if falldown > 15 else falldown/3
+
 def get_action(obs, q_network, epsilon, allow_break_action):
     """
     Select action according to e-greedy policy
@@ -188,7 +190,7 @@ def get_action(obs, q_network, epsilon, allow_break_action):
     #-------------------------------------
     if np.random.ranf() <= epsilon:
 
-        return np.random.choice([0,1,2,3,4,5,6])
+        return np.random.choice([0,1,2,3,4])
 
     # Prevent computation graph from being calculated
     with torch.no_grad():
@@ -197,8 +199,7 @@ def get_action(obs, q_network, epsilon, allow_break_action):
         action_values = q_network(obs_torch)
 
         # Remove attack/mine from possible actions if not facing a diamond
-        if not allow_break_action:
-            action_values[0, 3] = -float('inf')  
+        
 
             # Select action with highest Q-value
         action_idx = torch.argmax(action_values).item()
@@ -258,7 +259,7 @@ def get_observation(world_state):
             msg = world_state.observations[-1].text
             observations = json.loads(msg)
             print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
-
+            CUR_POS = (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos']))
             # Get observation
             grid = observations['floorAll']
             grid_binary = [1 if x == 'diamond_ore' or x == 'lava' else 0 for x in grid]
@@ -275,7 +276,7 @@ def get_observation(world_state):
             
             break
 
-    return obs
+    return obs, CUR_POS
 
 
 def prepare_batch(replay_buffer):
@@ -372,6 +373,8 @@ def train(agent_host):
     start_time = time.time()
     returns = []
     steps = []
+    global PREV_POS 
+    global TEMP_POS 
 
     # Begin main loop
     loop = tqdm(total=MAX_GLOBAL_STEPS, position=0, leave=False)
@@ -389,28 +392,24 @@ def train(agent_host):
             world_state = agent_host.getWorldState()
             for error in world_state.errors:
                 print("\nError:",error.text)
-        obs = get_observation(world_state)
-
+        obs, CUR_POS = get_observation(world_state)
+        PREV_POS = CUR_POS
+        TEMP_POS = CUR_POS
         # Run episode
         while world_state.is_mission_running:
             # Get action
             allow_break_action = obs[1, int(OBS_SIZE/2)-1, int(OBS_SIZE/2)] == 1
             action_idx = get_action(obs, q_network, epsilon, allow_break_action)
             command = ACTION_DICT[action_idx]
-            for i in command:
-                if i=="turn 1":
-                    print("Turn Right")
-                if i=="move 1":
-                    print("Move")
-                if i=="turn -1":
-                    print("Turn Left")
-                agent_host.sendCommand(i)
-                # time.sleep(2)
-            # time.sleep(5)
+            
+
+              
 
 
             # Take step
-            # agent_host.sendCommand(command)
+            if CUR_POS == TEMP_POS:
+                agent_host.sendCommand(command)
+            print("==", command)
 
             # If your agent isn't registering reward you may need to increase this
             time.sleep(.1)
@@ -429,12 +428,25 @@ def train(agent_host):
             world_state = agent_host.getWorldState()
             for error in world_state.errors:
                 print("Error:", error.text)
-            next_obs = get_observation(world_state) 
+            next_obs, CUR_POS = get_observation(world_state) 
+            time.sleep(.1)
+            next_obs, TEMP_POS = get_observation(world_state) 
 
             # Get reward
             reward = 0
             for r in world_state.rewards:
                 reward += r.getValue()
+
+            # Get falling reward
+            # if (PREV_POS[1] - CUR_POS[1]) % 3 == 0:
+            if CUR_POS == TEMP_POS:
+                print(PREV_POS, CUR_POS)
+                reward += falling_reward(CUR_POS, PREV_POS)
+                PREV_POS = CUR_POS
+                print("+++++", reward)
+            
+
+            
             episode_return += reward
 
             # Store step in replay buffer
