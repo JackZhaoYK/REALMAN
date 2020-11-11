@@ -25,7 +25,7 @@ SIZE = 50
 REWARD_DENSITY = .1
 PENALTY_DENSITY = .02
 OBS_SIZE = 5
-MAX_EPISODE_STEPS = 10000
+MAX_EPISODE_STEPS = 300
 MAX_GLOBAL_STEPS = 10000
 REPLAY_BUFFER_SIZE = 10000
 EPSILON_DECAY = .999
@@ -40,6 +40,11 @@ ACTION_DICT = {
     0: ['move 1'],  # Move one block forward
     1: ['turn 1','turn 1','move 1'],  # Turn 90 degrees to the right
     2: ['turn -1','turn -1','move 1'],  # Turn 90 degrees to the left
+    3: ['move 1'],  # Move one block forward
+    4: ['move 1'],  # Move one block forward
+    5: ['move 1'],  # Move one block forward
+    6: ['move 1'],  # Move one block forward
+
 }
 
 
@@ -110,8 +115,8 @@ def GetMissionXML():
                 <ServerSection>
                     <ServerInitialConditions>
                         <Time>
-                            <StartTime>12000</StartTime>
-                            <AllowPassageOfTime>true</AllowPassageOfTime>
+                            <StartTime>1000</StartTime>
+                            <AllowPassageOfTime>false</AllowPassageOfTime>
                         </Time>
                         <Weather>clear</Weather>
                     </ServerInitialConditions>
@@ -132,7 +137,7 @@ def GetMissionXML():
                 <AgentSection mode="Creative">
                     <Name>J</Name>
                     <AgentStart>
-                        <Placement x="2" y="201" z="2.5" pitch="45" yaw="90"/>
+                        <Placement x="2.5" y="201" z="2.5" pitch="0" yaw="90"/>
                         <Inventory>
                             <InventoryItem slot="0" type="diamond_pickaxe"/>
                         </Inventory>
@@ -142,8 +147,11 @@ def GetMissionXML():
                             <Item reward="1" type="diamond"/>
                         </RewardForCollectingItem>
                         <RewardForTouchingBlockType>
-                            <Block type="lava" reward="-1"/>
+                            <Block type="stone" reward="100"/>
                         </RewardForTouchingBlockType>
+                        <RewardForMissionEnd>
+                            <Reward description="found_goal" reward="1000" />
+                        </RewardForMissionEnd>
                         <DiscreteMovementCommands/>
                         <ObservationFromFullStats/>
                         <ObservationFromGrid>
@@ -153,6 +161,9 @@ def GetMissionXML():
                             </Grid>
                         </ObservationFromGrid>
                         <AgentQuitFromReachingCommandQuota total="'''+str(MAX_EPISODE_STEPS)+'''" />
+                        <AgentQuitFromTouchingBlockType>
+                            <Block type="stone" description="found_goal"/>
+                        </AgentQuitFromTouchingBlockType>
                     </AgentHandlers>
                 </AgentSection>
             </Mission>'''
@@ -177,7 +188,7 @@ def get_action(obs, q_network, epsilon, allow_break_action):
     #-------------------------------------
     if np.random.ranf() <= epsilon:
 
-        return np.random.choice([0,1,2])
+        return np.random.choice([0,1,2,3,4,5,6])
 
     # Prevent computation graph from being calculated
     with torch.no_grad():
@@ -387,7 +398,15 @@ def train(agent_host):
             action_idx = get_action(obs, q_network, epsilon, allow_break_action)
             command = ACTION_DICT[action_idx]
             for i in command:
+                if i=="turn 1":
+                    print("Turn Right")
+                if i=="move 1":
+                    print("Move")
+                if i=="turn -1":
+                    print("Turn Left")
                 agent_host.sendCommand(i)
+                # time.sleep(2)
+            # time.sleep(5)
 
 
             # Take step
