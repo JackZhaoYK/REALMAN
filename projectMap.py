@@ -18,13 +18,14 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
-
+cur_reward = 0
+# prev_position = 
 # Hyperparameters
 SIZE = 50
 REWARD_DENSITY = .1
 PENALTY_DENSITY = .02
 OBS_SIZE = 5
-MAX_EPISODE_STEPS = 100
+MAX_EPISODE_STEPS = 10000
 MAX_GLOBAL_STEPS = 10000
 REPLAY_BUFFER_SIZE = 10000
 EPSILON_DECAY = .999
@@ -36,10 +37,9 @@ LEARNING_RATE = 1e-4
 START_TRAINING = 500
 LEARN_FREQUENCY = 1
 ACTION_DICT = {
-    0: 'move 1',  # Move one block forward
-    1: 'turn 1',  # Turn 90 degrees to the right
-    2: 'turn -1',  # Turn 90 degrees to the left
-    3: 'attack 1'  # Destroy block
+    0: ['move 1'],  # Move one block forward
+    1: ['turn 1','turn 1','move 1'],  # Turn 90 degrees to the right
+    2: ['turn -1','turn -1','move 1'],  # Turn 90 degrees to the left
 }
 
 
@@ -89,19 +89,17 @@ def GetMissionXML():
             glass_xml+="<DrawBlock x='0' y='%d' z='2' type='glass' />" % (y)
             glass_xml+="<DrawBlock x='19' y='%d' z='2' type='glass' />" % (y)
     object_xml = ""
-    for y in range(201,4,-3):
+     # first block
+    object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(1,200)
+    object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(2,200)
+    object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(3,200)
+    for y in range(197,4,-3):
         # for _ in range(1,19):
         x = randint(1,17)
         object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x,y)
         object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+1,y)
         object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+2,y)
-    # for y in range(2,102):
-    #     for x in range(0,20):
-    #         diamond_xml+="<DrawBlock x='%d' y='%d' z='3' type='glass' />" % (x,y)
-    # lava_xml = ""
-    # for _ in range(0,int(((2*SIZE)**2)*PENALTY_DENSITY)):
-    #     lava_xml+="<DrawBlock x='%d' y='1' z='%d' type='lava' />" % (randint(-SIZE,SIZE),randint(-SIZE,SIZE))
-
+    
     return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
             <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
@@ -134,7 +132,7 @@ def GetMissionXML():
                 <AgentSection mode="Creative">
                     <Name>J</Name>
                     <AgentStart>
-                        <Placement x="0.5" y="2" z="0.5" pitch="45" yaw="0"/>
+                        <Placement x="2" y="201" z="2.5" pitch="45" yaw="90"/>
                         <Inventory>
                             <InventoryItem slot="0" type="diamond_pickaxe"/>
                         </Inventory>
@@ -178,11 +176,8 @@ def get_action(obs, q_network, epsilon, allow_break_action):
     #
     #-------------------------------------
     if np.random.ranf() <= epsilon:
-        if not allow_break_action:
-            return np.random.choice([0,1,2])
-        else:
 
-            return np.random.choice([0,1,2,3])
+        return np.random.choice([0,1,2])
 
     # Prevent computation graph from being calculated
     with torch.no_grad():
@@ -206,9 +201,9 @@ def init_malmo(agent_host):
     """
     my_mission = MalmoPython.MissionSpec(GetMissionXML(), True)
     my_mission_record = MalmoPython.MissionRecordSpec()
-    my_mission.requestVideo(480,480)
+    my_mission.requestVideo(512,512)
     my_mission.setViewpoint(1)
-    my_mission.startAt(0,202,1)
+    # my_mission.startAt(2,201,3)
 
     max_retries = 3
     my_clients = MalmoPython.ClientPool()
@@ -251,6 +246,7 @@ def get_observation(world_state):
             # First we get the json from the observation API
             msg = world_state.observations[-1].text
             observations = json.loads(msg)
+            print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
 
             # Get observation
             grid = observations['floorAll']
@@ -348,55 +344,54 @@ def train(agent_host):
         agent_host (MalmoPython.AgentHost)
     """
     # Init networks
-    '''
     q_network = QNetwork((2, OBS_SIZE, OBS_SIZE), len(ACTION_DICT))
     target_network = QNetwork((2, OBS_SIZE, OBS_SIZE), len(ACTION_DICT))
     target_network.load_state_dict(q_network.state_dict())
 
-    Init optimizer
+    # Init optimizer
     optim = torch.optim.Adam(q_network.parameters(), lr=LEARNING_RATE)
 
-    Init replay buffer
-    replay_buffer = deque(maxlen=REPLAY_BUFFER_SIZE)'''
+    # Init replay buffer
+    replay_buffer = deque(maxlen=REPLAY_BUFFER_SIZE)
 
     # Init vars
-    '''
     global_step = 0
     num_episode = 0
     epsilon = 1
     start_time = time.time()
     returns = []
-    steps = []'''
+    steps = []
 
     # Begin main loop
-    '''
     loop = tqdm(total=MAX_GLOBAL_STEPS, position=0, leave=False)
     while global_step < MAX_GLOBAL_STEPS:
         episode_step = 0
         episode_return = 0
         episode_loss = 0
         done = False
-        '''
 
         # Setup Malmo
-    agent_host = init_malmo(agent_host)
-    world_state = agent_host.getWorldState()
-    while not world_state.has_mission_begun:
-        time.sleep(0.1)
+        agent_host = init_malmo(agent_host)
         world_state = agent_host.getWorldState()
-        for error in world_state.errors:
-            print("\nError:",error.text)
-    obs = get_observation(world_state)
-'''
+        while not world_state.has_mission_begun:
+            time.sleep(0.1)
+            world_state = agent_host.getWorldState()
+            for error in world_state.errors:
+                print("\nError:",error.text)
+        obs = get_observation(world_state)
+
         # Run episode
         while world_state.is_mission_running:
             # Get action
             allow_break_action = obs[1, int(OBS_SIZE/2)-1, int(OBS_SIZE/2)] == 1
             action_idx = get_action(obs, q_network, epsilon, allow_break_action)
             command = ACTION_DICT[action_idx]
+            for i in command:
+                agent_host.sendCommand(i)
+
 
             # Take step
-            agent_host.sendCommand(command)
+            # agent_host.sendCommand(command)
 
             # If your agent isn't registering reward you may need to increase this
             time.sleep(.1)
@@ -450,7 +445,7 @@ def train(agent_host):
 
         if num_episode > 0 and num_episode % 10 == 0:
             log_returns(steps, returns)
-            print()'''
+            print()
 
 
 if __name__ == '__main__':
