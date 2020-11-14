@@ -10,7 +10,7 @@ title:  Team
 ***UCI Net ID***: yingkaiz
 
 ## Junling Fu
-***UCI Net ID***: junjiez3
+***UCI Net ID***: junlingf
 
-## USER 3
-***UCI Net ID***: ucinetid3
+## Jay Zhang
+***UCI Net ID***: junjiez3
