@@ -4,8 +4,10 @@ title: Status
 ---
 
 # Video
-[embeded Youtube link here](a minimum resolution of 1200 × 720 (i.e. 720p))
-
+##### REALMAN Machine Learning 150x speed
+[![](http://img.youtube.com/vi/NWoSBVhXOpY/0.jpg)](http://www.youtube.com/watch?v=NWoSBVhXOpY "REALMAN Machine Learning 150x speed")
+##### REALMAN Map Overview & Manual Control
+[![](http://img.youtube.com/vi/2ljQ6gmu17o/0.jpg)](http://www.youtube.com/watch?v=2ljQ6gmu17o "REALMAN Map Overview & Manual Control")
 # Project Summary
 In the modern world, people use autonomous robtos to do some work. Autonomous vacuum robots today commonly exists in many homes, it use sensors for obstacle dectection, new feature of cliff detection has been used as an additional sensing technology for safety. Under the development of technology, we believe that auto vacuum robots should have ability to detect cliff and down the stairs safely.Our project is a downhill survival game in the Minecraft, which asks the agent to go down the map as many levels as possible within limited steps. The agent is able to look down five floors in order to determine the next step. Once the player reaches the bottom of the map, the map will be regenerated. Rewards are given for each level the player goes down, and penalties are applied for touching the map boundary and dropping more than five levels at a time. The agent is expected to have higher rewards for optimization (considered to be combination of less falling damages and less steps).
 
