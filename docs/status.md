@@ -7,16 +7,23 @@ title: Status
 [embeded Youtube link here](a minimum resolution of 1200 × 720 (i.e. 720p))
 
 # Project Summary
-Our project is a downhill survival game in the Minecraft, which asks the player to go down the map as many levels as possible within limited steps. The agent is able to look down five floors in order to determine the next step. Once the player reaches the bottom of the map, the map will be regenerated.
+Our project is a downhill survival game in the Minecraft, which asks the player to go down the map as many levels as possible within limited steps. The agent is able to look down five floors in order to determine the next step. Once the player reaches the bottom of the map, the map will be regenerated. Rewards are given for each level the player goes down, and penalties are applied for touching the map boundary and dropping more than five levels at a time.
 
 # Approach
-Give a detailed description of your approach, in a few paragraphs. You should summarize the main algorithm you are using, such as by writing out the update equation (even if it is off-the-shelf). You should also give details about the approach as it applies to your scenario. For example, if you are using reinforcement learning for a given scenario, describe the setup in some detail, i.e. how many states/actions you have, what does the reward function look like. A good guideline is to incorporate sufficient details so that most of your approach is reproducible by a reader. I encourage you to use figures for this, as appropriate, as we used in the writeups for the assignments. I recommend at least 2-3 paragraphs.
+Different from path searching game and item collecting game, we are trying to build up a universal stratgy that can deal with randomized map. Currently, we are implementing the game based on Q-network with pytouch, and the map is build based on the most basic needs. Instead of making a 3D map, our initial map is a 2D version while the player can either go left or right. Rewards and Penalties are applied through XML and loss functions.
+The perfomance our fist model is largely depend on the weight of rewards and penalities, and we have found a reasonable value for those feedbacks. The folllowing result is our first 'successful' try.
+
+![image]()
 
 # Evaluation
-An important aspect of your project, as we mentioned in the beginning, is evaluating your project. Be clear and precise about describing the evaluation setup, for both quantitative and qualitative results. Present the results to convince the reader that you have a working implementation. Use plots, charts, tables, screenshots, figures, etc. as needed. I expect you will need at least a 1-2 paragraphs to describe each type of evaluation that you perform.
+The most obvious way to evaluate the performance of our model is the levels the player goes down within limited steps, however, we noticed the player wasted a huge amount of steps on turning around and move toward the boundry of our map. In order to get a more reasonable evaluation, we implemented penalty when player move toward the boundry. While random steps may cause the player goes toward the boundry, our player has learned to avoid stuck on such actions. The folloing plot is a comparesion of results before and after the penalty is implemented.
+![image]()
+![image]()
+
 
 # Remaining Goals and Challenges
-In a few paragraphs, describe your goals for the next 4-5 weeks, when the final report is due. At the very least, describe how you consider your prototype to be limited, and what you want to add to make it a complete contribution. Note that if you think your algorithm is quite good, but have not performed sufficient evaluation, doing them can also be a reasonable goal. Similarly, you may propose some baselines (such as a hand-coded policy) that you did not get a chance to implement, but want to compare against for the final submission. Finally, given your experience so far, describe some of the challenges you anticipate facing by the time your final report is due, how crippling you think it might be, and what you might do to solve them.
+Even though out model is opreating normally, we think it can do better than that. Sometimes the player will turn around on the first level and stuck there, and we believe there is something wrong with the rating for each possible move. Modifing the training function with more weighted parameters might be helpful in this situation. The rewards and penalities can me further improved but we might need a bit more time on testing different combinations. The loss function is a another potential problem while our model gives huge loss values over five thousand while our rewards was set to five points per level.
+One of the frustrating part in our project is we waste a lot of time setting up our linux environment and realized there is barely no improvement on the speed of out model limited bu Malmo, and some functions works really wired in Malmo like you have to add .5 on the player's x and z coordinates in order to make 'move' command funcional.  
 
 # Resources Used
-Mention all the resources that you found useful in writing your implementation. This should include everything like code documentation, AI/ML libraries, source code that you used, StackOverflow, etc. You do not have to be comprehensive, but it is important to report the ones that are crucial to your project. I would like to know these so that the more useful ones can be shared with others in the course.
+We used Deep Q-network in homework 2 and modified to fit in our game. Pytouch is used and greedy algorithm is added in our network.
