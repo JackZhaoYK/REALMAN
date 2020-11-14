@@ -17,7 +17,7 @@ In the modern world, people use autonomous robtos to do some work. Autonomous va
 Different from path searching game and item collecting game, we are trying to build up a universal stratgy that can deal with randomized map. Currently, we are implementing the game based on Q-network with pytouch, and the map is build based on the most basic needs. Instead of making a 3D map, our initial map is a 2D version while the player can either go left or right. Rewards and Penalties are applied through XML and loss functions.
 The perfomance our fist model is largely depend on the weight of rewards and penalities, and we have found a reasonable value for those feedbacks. The folllowing result is our first 'successful' try.
 
-![image]()
+![image](img/returns.png)
 
 # Evaluation
 The most obvious way to evaluate the performance of our model is the levels the player goes down within limited steps, however, we noticed the player wasted a huge amount of steps on turning around and move toward the boundry of our map. In order to get a more reasonable evaluation, we implemented penalty when player move toward the boundry. While random steps may cause the player goes toward the boundry, our player has learned to avoid stuck on such actions. The folloing plot is a comparesion of results before and after the penalty is implemented.
