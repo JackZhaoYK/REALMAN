@@ -3,7 +3,7 @@ layout: default
 title:  Home
 ---
 
-![image](在这里加一个大楼侧面的图片，宏伟一点的)
+<img src="./img/mapOverview.png"  />
 
 # Introduction 
 In the modern world, people use autonomous robtos to do some work. Autonomous vacuum robots today commonly exists in many homes, it use sensors for obstacle dectection, new feature of cliff detection has been used as an additional sensing technology for safety. Under the development of technology, we believe that auto vacuum robots should have ability to detect cliff and down the stairs safely.Our project is a downhill survival game in the Minecraft, which asks the agent to go down the map as many levels as possible within limited steps. The agent is expected to have higher rewards for optimization (considered to be combination of less falling damages and less steps). The agent is a non-biology creatures but has courage to fall down from an 100-level building. No one can complete the task except a real man. 
