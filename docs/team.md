@@ -6,10 +6,10 @@ title:  Team
 # {{ page.title }}
 
 
-## USER 1
+## Yingkai Zhao
 ***UCI Net ID***: yingkaiz
 
-## USER 2
+## Junling Fu
 ***UCI Net ID***: junjiez3
 
 ## USER 3
