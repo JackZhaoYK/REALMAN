@@ -14,8 +14,8 @@ https://github.com/JackZhaoYK/REALMAN
 
 
 # Reports:
-- [Proposal](proposal.html)
-- [Status](status.html)
-- [Final](final.html)
+- [Proposal](proposal.md)
+- [Status](status.md)
+- [Final](final.md)
 
 
