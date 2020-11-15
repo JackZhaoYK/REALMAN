@@ -5,7 +5,8 @@ title: Status
 
 # Video
 ##### REALMAN Machine Learning 150x speed
-[![](http://img.youtube.com/vi/NWoSBVhXOpY/0.jpg)](http://www.youtube.com/watch?v=NWoSBVhXOpY "REALMAN Machine Learning 150x speed")
+<iframe width="560" height="315" src="https://www.youtube.com/embed/NWoSBVhXOpY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ##### REALMAN Map Overview & Manual Control
 [![](http://img.youtube.com/vi/2ljQ6gmu17o/0.jpg)](http://www.youtube.com/watch?v=2ljQ6gmu17o "REALMAN Map Overview & Manual Control")
 
