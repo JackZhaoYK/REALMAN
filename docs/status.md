@@ -4,7 +4,7 @@ title: Status
 ---
 ## Video
 ### REALMAN Status Report Video
-<iframe width="560" height="315" src="https://www.youtube.com/watch?v=aYoLBZaDmwU&feature=youtu.be" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/aYoLBZaDmwU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### REALMAN Machine Learning 150x speed
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NWoSBVhXOpY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
