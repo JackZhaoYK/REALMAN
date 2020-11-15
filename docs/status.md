@@ -8,7 +8,7 @@ title: Status
 <iframe width="560" height="315" src="https://www.youtube.com/embed/NWoSBVhXOpY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ##### REALMAN Map Overview & Manual Control
-[![](http://img.youtube.com/vi/2ljQ6gmu17o/0.jpg)](http://www.youtube.com/watch?v=2ljQ6gmu17o "REALMAN Map Overview & Manual Control")
+<iframe width="560" height="315" src="https://www.youtube.com/embed/2ljQ6gmu17o" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 [REALMAN Machine Learning Original speed](http://www.youtube.com/watch?v=fry1m9jmaYk "REALMAN Machine Learning Original speed")
 # Project Summary
