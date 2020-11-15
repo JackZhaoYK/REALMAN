@@ -20,9 +20,9 @@ The perfomance our fist model is largely depend on the weight of rewards and pen
 ![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/returns.png?raw=true)
 
 # Evaluation
-The most obvious way to evaluate the performance of our model is the levels the player goes down within limited steps, however, we noticed the player wasted a huge amount of steps on turning around and move toward the boundry of our map. In order to get a more reasonable evaluation, we implemented penalty when player move toward the boundry. While random steps may cause the player goes toward the boundry, our player has learned to avoid stuck on such actions. The folloing plot is a comparesion of results before and after the penalty is implemented.
-![image]()
-![image]()
+The most obvious way to evaluate the performance of our model is the levels the player goes down within limited steps, however, we noticed the player wasted a huge amount of steps on turning around and move toward the boundry of our map. In order to get a more reasonable evaluation, we implemented penalty when player move toward the boundry. While random steps may cause the player goes toward the boundry, our player has learned to avoid stuck on such actions. The folloing plot isthe results before the penalty is implemented.
+![without_penalty](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/without_penalty.png?raw=true)
+
 
 
 # Remaining Goals and Challenges
