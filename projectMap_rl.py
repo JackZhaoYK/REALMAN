@@ -24,8 +24,8 @@ class DiamondCollector(gym.Env):
         self.size = 50
         self.reward_density = .1
         self.penalty_density = .02
-        self.obs_size = 5
-        self.max_episode_steps = 100
+        self.obs_size = 20
+        self.max_episode_steps = 200
         self.log_frequency = 10
 
         # Rllib Parameters
@@ -121,6 +121,26 @@ class DiamondCollector(gym.Env):
         return self.obs.flatten(), reward, done, dict()
 
     def get_mission_xml(self):
+
+        glass_xml = ""
+        for y in range(2,202):
+            for x in range(0,20):
+                glass_xml+="<DrawBlock x='%d' y='%d' z='1' type='glass' />" % (x,y)
+                glass_xml+="<DrawBlock x='%d' y='%d' z='3' type='glass' />" % (x,y)
+                glass_xml+="<DrawBlock x='0' y='%d' z='2' type='glass' />" % (y)
+                glass_xml+="<DrawBlock x='19' y='%d' z='2' type='glass' />" % (y)
+        object_xml = ""
+        # first block
+        object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(1,200)
+        object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(2,200)
+        object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(3,200)
+        for y in range(197,4,-3):
+            # for _ in range(1,19):
+            x = randint(1,17)
+            object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x,y)
+            object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+1,y)
+            object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+2,y)
+    
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
@@ -131,7 +151,7 @@ class DiamondCollector(gym.Env):
                     <ServerSection>
                         <ServerInitialConditions>
                             <Time>
-                                <StartTime>12000</StartTime>
+                                <StartTime>1000</StartTime>
                                 <AllowPassageOfTime>false</AllowPassageOfTime>
                             </Time>
                             <Weather>clear</Weather>
@@ -139,10 +159,10 @@ class DiamondCollector(gym.Env):
                         <ServerHandlers>
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='2' y2='2' z1='{}' z2='{}' type='air'/>".format(-self.size, self.size, -self.size, self.size) + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='stone'/>".format(-self.size, self.size, -self.size, self.size) + \
-                                "".join(["<DrawBlock x='{}'  y='2' z='{}' type='diamond_ore' />".format(randint(-self.size, self.size), randint(-self.size, self.size)) for _ in range(int(4*self.size*self.size*self.reward_density))]) + \
-                                "".join(["<DrawBlock x='{}'  y='1' z='{}' type='lava' />".format(randint(-self.size, self.size), randint(-self.size, self.size)) for _ in range(int(4*self.size*self.size*self.penalty_density))]) + \
+                                "<DrawCuboid x1='0' x2='19' y1='2' y2='202' z1='1' z2='3' type='air'/>" + \
+                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='lava'/>".format(-self.size, self.size, -self.size, self.size) + \
+                                glass_xml + \
+                                object_xml + \
                                 '''<DrawBlock x='0'  y='2' z='0' type='air' />
                                 <DrawBlock x='0'  y='1' z='0' type='stone' />
                             </DrawingDecorator>
@@ -150,31 +170,38 @@ class DiamondCollector(gym.Env):
                         </ServerHandlers>
                     </ServerSection>
 
-                    <AgentSection mode="Survival">
-                        <Name>CS175DiamondCollector</Name>
+                    <AgentSection mode="Creative">
+                        <Name>J</Name>
                         <AgentStart>
-                            <Placement x="0.5" y="2" z="0.5" pitch="45" yaw="0"/>
+                            <Placement x="2.5" y="201" z="2.5" pitch="0" yaw="90"/>
                             <Inventory>
                                 <InventoryItem slot="0" type="diamond_pickaxe"/>
                             </Inventory>
                         </AgentStart>
                         <AgentHandlers>
-                            <ContinuousMovementCommands/>
+                            <ChatCommands />
                             <RewardForCollectingItem>
-                                <Item type="diamond" reward="1" />
+                                <Item reward="1" type="diamond"/>
                             </RewardForCollectingItem>
-                            <RewardForMissionEnd rewardForDeath="-1">
-                                <Reward reward="0" description="Mission End"/>
+                            <RewardForTouchingBlockType>
+                                <Block type="lava" reward="100"/>
+                                <Block type="glass" reward="-100"/>
+                            </RewardForTouchingBlockType>
+                            <RewardForMissionEnd>
+                                <Reward description="found_goal" reward="1000" />
                             </RewardForMissionEnd>
+                            <DiscreteMovementCommands/>
                             <ObservationFromFullStats/>
-                            <ObservationFromRay/>
                             <ObservationFromGrid>
                                 <Grid name="floorAll">
-                                    <min x="-'''+str(int(self.obs_size/2))+'''" y="-1" z="-'''+str(int(self.obs_size/2))+'''"/>
-                                    <max x="'''+str(int(self.obs_size/2))+'''" y="0" z="'''+str(int(self.obs_size/2))+'''"/>
+                                    <min x="-'''+str(self.obs_size)+'''" y="-14" z="-'''+str(self.obs_size)+'''"/>
+                                    <max x="'''+str(self.obs_sizeE)+'''" y="0" z="'''+str(self.obs_size)+'''"/>
                                 </Grid>
                             </ObservationFromGrid>
-                            <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps * 3)+'''" />
+                            <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps)+'''" />
+                            <AgentQuitFromTouchingBlockType>
+                                <Block type="lava" description="found_goal"/>
+                            </AgentQuitFromTouchingBlockType>
                         </AgentHandlers>
                     </AgentSection>
                 </Mission>'''
@@ -185,7 +212,7 @@ class DiamondCollector(gym.Env):
         """
         my_mission = MalmoPython.MissionSpec(self.get_mission_xml(), True)
         my_mission_record = MalmoPython.MissionRecordSpec()
-        my_mission.requestVideo(800, 500)
+        my_mission.requestVideo(512,512)
         my_mission.setViewpoint(1)
 
         max_retries = 3
