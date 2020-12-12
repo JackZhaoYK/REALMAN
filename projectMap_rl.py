@@ -16,6 +16,11 @@ import gym, ray
 from gym.spaces import Discrete, Box
 from ray.rllib.agents import ppo
 
+SIZE = 50
+REWARD_DENSITY = .1
+PENALTY_DENSITY = .02
+OBS_SIZE = 20
+MAX_EPISODE_STEPS = 200
 
 class DiamondCollector(gym.Env):
 
@@ -43,7 +48,7 @@ class DiamondCollector(gym.Env):
 
         # DiamondCollector Parameters
         self.obs = None
-        self.allow_break_action = False
+        self.cur_pos = (0,0,0)
         self.episode_step = 0
         self.episode_return = 0
         self.returns = []
@@ -72,7 +77,7 @@ class DiamondCollector(gym.Env):
             self.log_returns()
 
         # Get Observation
-        self.obs, self.allow_break_action = self.get_observation(world_state)
+        self.obs, self.cur_pos = self.get_observation()
 
         return self.obs.flatten()
 
@@ -91,13 +96,13 @@ class DiamondCollector(gym.Env):
         """
 
         # Get Action
-        if self.allow_break_action and action[2] > 0:  # Move or attack not both
-            self.agent_host.sendCommand('move 0')
-            self.agent_host.sendCommand('turn 0')
+        if action[2] > 0:  # Move or attack not both
+            # self.agent_host.sendCommand('move 0')
+            # self.agent_host.sendCommand('turn 0')
             self.agent_host.sendCommand('attack 1')
             time.sleep(1)  # Allow steve to break the block
         else:
-            self.agent_host.sendCommand('attack 0')
+            # self.agent_host.sendCommand('attack 0')
             self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
             self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
             time.sleep(.2)
@@ -107,9 +112,10 @@ class DiamondCollector(gym.Env):
         world_state = self.agent_host.getWorldState()
         for error in world_state.errors:
             print("Error:", error.text)
-        self.obs, self.allow_break_action = self.get_observation(world_state) 
+        self.obs, self.cur_pos = self.get_observation() 
 
         # Get Done
+        
         done = not world_state.is_mission_running 
 
         # Get Reward
@@ -121,6 +127,26 @@ class DiamondCollector(gym.Env):
         return self.obs.flatten(), reward, done, dict()
 
     def get_mission_xml(self):
+
+        glass_xml = ""
+        for y in range(2,202):
+            for x in range(0,20):
+                glass_xml+="<DrawBlock x='%d' y='%d' z='1' type='glass' />" % (x,y)
+                glass_xml+="<DrawBlock x='%d' y='%d' z='3' type='glass' />" % (x,y)
+                glass_xml+="<DrawBlock x='0' y='%d' z='2' type='glass' />" % (y)
+                glass_xml+="<DrawBlock x='19' y='%d' z='2' type='glass' />" % (y)
+        object_xml = ""
+         # first block
+        object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(1,200)
+        object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(2,200)
+        object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(3,200)
+        for y in range(197,4,-3):
+            # for _ in range(1,19):
+            x = randint(1,17)
+            object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x,y)
+            object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+1,y)
+            object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+2,y)
+        
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
@@ -131,7 +157,7 @@ class DiamondCollector(gym.Env):
                     <ServerSection>
                         <ServerInitialConditions>
                             <Time>
-                                <StartTime>12000</StartTime>
+                                <StartTime>1000</StartTime>
                                 <AllowPassageOfTime>false</AllowPassageOfTime>
                             </Time>
                             <Weather>clear</Weather>
@@ -139,10 +165,10 @@ class DiamondCollector(gym.Env):
                         <ServerHandlers>
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='2' y2='2' z1='{}' z2='{}' type='air'/>".format(-self.size, self.size, -self.size, self.size) + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='stone'/>".format(-self.size, self.size, -self.size, self.size) + \
-                                "".join(["<DrawBlock x='{}'  y='2' z='{}' type='diamond_ore' />".format(randint(-self.size, self.size), randint(-self.size, self.size)) for _ in range(int(4*self.size*self.size*self.reward_density))]) + \
-                                "".join(["<DrawBlock x='{}'  y='1' z='{}' type='lava' />".format(randint(-self.size, self.size), randint(-self.size, self.size)) for _ in range(int(4*self.size*self.size*self.penalty_density))]) + \
+                                "<DrawCuboid x1='0' x2='19' y1='2' y2='202' z1='1' z2='3' type='air'/>" + \
+                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='lava'/>".format(-SIZE, SIZE, -SIZE, SIZE) + \
+                                glass_xml + \
+                                object_xml + \
                                 '''<DrawBlock x='0'  y='2' z='0' type='air' />
                                 <DrawBlock x='0'  y='1' z='0' type='stone' />
                             </DrawingDecorator>
@@ -150,34 +176,42 @@ class DiamondCollector(gym.Env):
                         </ServerHandlers>
                     </ServerSection>
 
-                    <AgentSection mode="Survival">
-                        <Name>CS175DiamondCollector</Name>
+                    <AgentSection mode="Creative">
+                        <Name>J</Name>
                         <AgentStart>
-                            <Placement x="0.5" y="2" z="0.5" pitch="45" yaw="0"/>
+                            <Placement x="2.5" y="201" z="2.5" pitch="0" yaw="90"/>
                             <Inventory>
                                 <InventoryItem slot="0" type="diamond_pickaxe"/>
                             </Inventory>
                         </AgentStart>
                         <AgentHandlers>
-                            <ContinuousMovementCommands/>
+                            <ChatCommands />
                             <RewardForCollectingItem>
-                                <Item type="diamond" reward="1" />
+                                <Item reward="1" type="diamond"/>
                             </RewardForCollectingItem>
-                            <RewardForMissionEnd rewardForDeath="-1">
-                                <Reward reward="0" description="Mission End"/>
+                            <RewardForTouchingBlockType>
+                                <Block type="lava" reward="100"/>
+                                <Block type="glass" reward="-100"/>
+                            </RewardForTouchingBlockType>
+                            <RewardForMissionEnd>
+                                <Reward description="found_goal" reward="1000" />
                             </RewardForMissionEnd>
+                            <DiscreteMovementCommands/>
                             <ObservationFromFullStats/>
-                            <ObservationFromRay/>
                             <ObservationFromGrid>
                                 <Grid name="floorAll">
-                                    <min x="-'''+str(int(self.obs_size/2))+'''" y="-1" z="-'''+str(int(self.obs_size/2))+'''"/>
-                                    <max x="'''+str(int(self.obs_size/2))+'''" y="0" z="'''+str(int(self.obs_size/2))+'''"/>
+                                    <min x="-'''+str(OBS_SIZE)+'''" y="-14" z="-'''+str(OBS_SIZE)+'''"/>
+                                    <max x="'''+str(OBS_SIZE)+'''" y="0" z="'''+str(OBS_SIZE)+'''"/>
                                 </Grid>
                             </ObservationFromGrid>
-                            <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps * 3)+'''" />
+                            <AgentQuitFromReachingCommandQuota total="'''+str(MAX_EPISODE_STEPS)+'''" />
+                            <AgentQuitFromTouchingBlockType>
+                                <Block type="lava" description="found_goal"/>
+                            </AgentQuitFromTouchingBlockType>
                         </AgentHandlers>
                     </AgentSection>
                 </Mission>'''
+
 
     def init_malmo(self):
         """
@@ -212,7 +246,7 @@ class DiamondCollector(gym.Env):
 
         return world_state
 
-    def get_observation(self, world_state):
+    def get_observation(self):
         """
         Use the agent observation API to get a 2 x 5 x 5 grid around the agent. 
         The agent is in the center square facing up.
@@ -223,25 +257,30 @@ class DiamondCollector(gym.Env):
         Returns
             observation: <np.array>
         """
-        obs = np.zeros((2, self.obs_size, self.obs_size))
-        allow_break_action = False
-
+        obs = np.zeros((15, OBS_SIZE*2+1, OBS_SIZE*2+1))
+        CUR_POS = (0,0,0)
         while world_state.is_mission_running:
             time.sleep(0.1)
-            world_state = self.agent_host.getWorldState()
+            world_state = agent_host.getWorldState()
             if len(world_state.errors) > 0:
                 raise AssertionError('Could not load grid.')
 
             if world_state.number_of_observations_since_last_state > 0:
                 # First we get the json from the observation API
                 msg = world_state.observations[-1].text
+                # print(len(world_state.observations))
                 observations = json.loads(msg)
-
+                # print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
+                # print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
+                CUR_POS = (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos']))
+                
                 # Get observation
+                # print(observations)
                 grid = observations['floorAll']
-                grid_binary = [1 if x == 'diamond_ore' or x == 'lava' else 0 for x in grid]
-                obs = np.reshape(grid_binary, (2, self.obs_size, self.obs_size))
-
+                grid_binary = [1 if x == 'diamond_ore' else 0 for x in grid]
+                # print(grid_binary)
+                obs = np.reshape(grid_binary, (15, OBS_SIZE*2+1, OBS_SIZE*2+1))
+                # print(obs)
                 # Rotate observation with orientation of agent
                 yaw = observations['Yaw']
                 if yaw == 270:
@@ -250,12 +289,12 @@ class DiamondCollector(gym.Env):
                     obs = np.rot90(obs, k=2, axes=(1, 2))
                 elif yaw == 90:
                     obs = np.rot90(obs, k=3, axes=(1, 2))
-
-                allow_break_action = observations['LineOfSight']['type'] == 'diamond_ore'
                 
                 break
 
-        return obs, allow_break_action
+        return obs, CUR_POS
+
+
 
     def log_returns(self):
         """
