@@ -206,7 +206,7 @@ class DiamondCollector(gym.Env):
                 object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(x+2,y,z)
         end_xml = ""
         for i in range(-self.size,self.size+1):
-            end_xml+='<Marker reward="100" x="%d" y="2" z="%d" tolerance="1.1"/>' %(i,i)
+            end_xml+="<Marker reward='100' x='%d' y='2' z='%d' tolerance='2' />" %(i,i)
 
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -226,7 +226,7 @@ class DiamondCollector(gym.Env):
                         <ServerHandlers>
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
-                                "<DrawCuboid x1='0' x2='19' y1='2' y2='202' z1='1' z2='6' type='air'/>" + \
+                                "<DrawCuboid x1='0' x2='19' y1='1' y2='202' z1='1' z2='6' type='air'/>" + \
                                 "<DrawCuboid x1='{}' x2='{}' y1='0' y2='1' z1='{}' z2='{}' type='stone'/>".format(-self.size, self.size, -self.size, self.size) + \
                                 glass_xml + \
                                 object_xml + \
