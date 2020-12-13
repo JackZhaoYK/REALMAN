@@ -28,6 +28,7 @@ class DiamondCollector(gym.Env):
         self.max_episode_steps = 600
         self.log_frequency = 10
         self.episode_num = 0
+        self.quit = False
 
         # Rllib Parameters
         self.action_space = Box(-1, 1, shape=(3,), dtype=np.float32)
@@ -83,6 +84,7 @@ class DiamondCollector(gym.Env):
         self.episode_return = 0
         self.episode_step = 0
         self.episode_num+=1
+        self.quit = False
 
         # Log
         if len(self.returns) > self.log_frequency and \
@@ -127,6 +129,11 @@ class DiamondCollector(gym.Env):
         #     self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
         #     time.sleep(1)
         # else:
+        # print("move:     ",action[0])
+        # print("turn:     ",action[1])
+        if self.quit:
+            self.agent_host.sendCommand('quit')
+            return self.obs.flatten(), 0, True, dict()
         self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
         self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
         # self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
@@ -157,16 +164,22 @@ class DiamondCollector(gym.Env):
         else:
             pass
             # print("Diff: CUR: {}, PREV: {}".format(self.cur_pos, self.temp_pos))
-        cur_reward =[]
+        # cur_reward =[]
+        
         for r in world_state.rewards:
             if r.getValue() < 0:
                 reward += -1
-                cur_reward.append(-1)
+                # cur_reward.append(-1)
+            if r.getValue() >90:
+                reward += 100
+                self.quit = True
+
+
+                
         # print("reward: ",cur_reward)
         self.episode_return += reward
         if reward!=0:
             self.agent_host.sendCommand("chat Current Reward: "+str(reward)+"   Total: "+str(self.episode_return))
-
         return self.obs.flatten(), reward, done, dict()
 
     def get_mission_xml(self):
@@ -191,6 +204,9 @@ class DiamondCollector(gym.Env):
                 object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(x,y,z)
                 object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(x+1,y,z)
                 object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(x+2,y,z)
+        end_xml = ""
+        for i in range(-self.size,self.size+1):
+            end_xml+='<Marker reward="100" x="%d" y="2" z="%d" tolerance="1.1"/>' %(i,i)
 
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -211,7 +227,7 @@ class DiamondCollector(gym.Env):
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
                                 "<DrawCuboid x1='0' x2='19' y1='2' y2='202' z1='1' z2='6' type='air'/>" + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='lava'/>".format(-self.size, self.size, -self.size, self.size) + \
+                                "<DrawCuboid x1='{}' x2='{}' y1='0' y2='1' z1='{}' z2='{}' type='stone'/>".format(-self.size, self.size, -self.size, self.size) + \
                                 glass_xml + \
                                 object_xml + \
                                 '''<DrawBlock x='0'  y='2' z='0' type='air' />
@@ -231,14 +247,19 @@ class DiamondCollector(gym.Env):
                         </AgentStart>
                         <AgentHandlers>
                             <ChatCommands />
+                            <ContinuousMovementCommands/>
+                            <MissionQuitCommands/>
                             <RewardForTouchingBlockType>
                                 <Block type="glass" reward="-0.3"/>
                             </RewardForTouchingBlockType>
-                            <RewardForMissionEnd>
-                                <Reward description="found_goal" reward="100" />
-                            </RewardForMissionEnd>
-                            <DiscreteMovementCommands/>
+                            <RewardForReachingPosition>''' +\
+                                end_xml +\
+                            '''</RewardForReachingPosition>
                             <ObservationFromFullStats/>
+                            <ObservationFromRay/>
+                            <ObservationFromChat/>
+                            
+
                             <ObservationFromGrid>
                                 <Grid name="floorAll">
                                     <min x="-'''+str(self.obs_size)+'''" y="-14" z="-'''+str(self.obs_size)+'''"/>
@@ -246,9 +267,6 @@ class DiamondCollector(gym.Env):
                                 </Grid>
                             </ObservationFromGrid>
                             <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps)+'''" />
-                            <AgentQuitFromTouchingBlockType>
-                                <Block description="found_goal" type="lava"/>
-                            </AgentQuitFromTouchingBlockType>
                         </AgentHandlers>
                     </AgentSection>
                 </Mission>'''
@@ -365,7 +383,7 @@ if __name__ == '__main__':
     trainer = ppo.PPOTrainer(env=DiamondCollector, config={
         'env_config': {},           # No environment parameters to configure
         'framework': 'torch',       # Use pyotrch instead of tensorflow
-        'num_gpus': 0,              # We aren't using GPUs
+        'num_gpus': 2,              # We aren't using GPUs
         'num_workers': 0            # We aren't using parallelism
     })
 
