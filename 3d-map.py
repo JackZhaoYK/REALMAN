@@ -12,14 +12,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.random import randint
 
-import gym, ray
+import gym
+import ray
 from gym.spaces import Discrete, Box
 from ray.rllib.agents import ppo
 
 
 class DiamondCollector(gym.Env):
 
-    def __init__(self, env_config):  
+    def __init__(self, env_config):
         # Static Parameters
         self.size = 50
         self.reward_density = .1
@@ -32,11 +33,12 @@ class DiamondCollector(gym.Env):
 
         # Rllib Parameters
         self.action_space = Box(-1, 1, shape=(3,), dtype=np.float32)
-        self.observation_space = Box(0, 1, shape=(np.prod([15, self.obs_size*2+1, self.obs_size*2+1]), ), dtype=np.int32)
+        self.observation_space = Box(0, 1, shape=(
+            np.prod([15, self.obs_size*2+1, self.obs_size*2+1]), ), dtype=np.int32)
         # Malmo Parameters
         self.agent_host = MalmoPython.AgentHost()
         try:
-            self.agent_host.parse( sys.argv )
+            self.agent_host.parse(sys.argv)
         except RuntimeError as e:
             print('ERROR:', e)
             print(self.agent_host.getUsage())
@@ -44,17 +46,16 @@ class DiamondCollector(gym.Env):
 
         # DiamondCollector Parameters
         self.obs = None
-        self.cur_pos = (0,0,0)
+        self.cur_pos = (0, 0, 0)
         self.episode_step = 0
         self.episode_return = 0
         self.returns = []
         self.steps = []
 
         # ADDED
-        self.prev_pos = (0,0,0)
-        self.temp_pos = (0,0,0)
-        self.pos_list =list()
-
+        self.prev_pos = (0, 0, 0)
+        self.temp_pos = (0, 0, 0)
+        self.pos_list = list()
 
     def reset(self):
         """
@@ -77,30 +78,31 @@ class DiamondCollector(gym.Env):
         world_state = self.init_malmo()
 
         # Reset Variables
-        print("Episode:  ",self.episode_num,"Step:  ",self.episode_step,"Reward:  ",self.episode_return)
+        print("Episode:  ", self.episode_num, "Step:  ",
+              self.episode_step, "Reward:  ", self.episode_return)
         self.returns.append(self.episode_return)
         current_step = self.steps[-1] if len(self.steps) > 0 else 0
         self.steps.append(current_step + self.episode_step)
         self.episode_return = 0
         self.episode_step = 0
-        self.episode_num+=1
+        self.episode_num += 1
         self.quit = False
 
         # Log
         if len(self.returns) > self.log_frequency and \
-            len(self.returns) % self.log_frequency == 0:
+                len(self.returns) % self.log_frequency == 0:
             print("Now we should have our log!")
             self.log_returns()
 
         # Get Observation
         self.obs, self.cur_pos = self.get_observation(world_state)
-        self.obs, self.temp_pos = self.get_observation(world_state) 
+        self.obs, self.temp_pos = self.get_observation(world_state)
         self.obs, self.prev_pos = self.get_observation(world_state)
 
         return self.obs.flatten()
 
     def falling_reward(self, cur, prev):
-        falldown= prev[1] - cur[1] 
+        falldown = prev[1] - cur[1]
         return -15 if falldown >= 15 else falldown
 
     def step(self, action):
@@ -116,7 +118,7 @@ class DiamondCollector(gym.Env):
             done: <bool> indicates terminal state
             info: <dict> dictionary of extra information
         """
-        
+
         # Get Action
         # if action[1] > 0.5:
         #     self.agent_host.sendCommand('turn 1')
@@ -146,16 +148,16 @@ class DiamondCollector(gym.Env):
         world_state = self.agent_host.getWorldState()
         for error in world_state.errors:
             print("Error:", error.text)
-        self.obs, self.cur_pos = self.get_observation(world_state) 
+        self.obs, self.cur_pos = self.get_observation(world_state)
         self.pos_list.append(self.cur_pos)
         # print("STEP: ",len(self.pos_list))
         # Get Done
-        
-        done = not world_state.is_mission_running 
+
+        done = not world_state.is_mission_running
 
         # Get Reward
         time.sleep(0.1)
-        self.obs, self.temp_pos = self.get_observation(world_state) 
+        self.obs, self.temp_pos = self.get_observation(world_state)
 
         reward = 0
         if self.temp_pos == self.cur_pos:
@@ -165,70 +167,82 @@ class DiamondCollector(gym.Env):
             pass
             # print("Diff: CUR: {}, PREV: {}".format(self.cur_pos, self.temp_pos))
         # cur_reward =[]
-        
+
         for r in world_state.rewards:
             if r.getValue() < 0:
                 reward += -1
                 # cur_reward.append(-1)
-            if r.getValue() >90:
+            if r.getValue() > 90:
                 reward += 100
                 self.quit = True
 
-
-                
         # print("reward: ",cur_reward)
         self.episode_return += reward
-        if reward!=0:
-            self.agent_host.sendCommand("chat Current Reward: "+str(reward)+"   Total: "+str(self.episode_return))
+        if reward != 0:
+            self.agent_host.sendCommand(
+                "chat Current Reward: "+str(reward)+"   Total: "+str(self.episode_return))
         return self.obs.flatten(), reward, done, dict()
 
     def get_mission_xml(self):
 
         glass_xml = ""
-        for y in range(2,202):
-            for x in range(0,20):
-                glass_xml+="<DrawBlock x='%d' y='%d' z='1' type='glass' />" % (x,y)
-                glass_xml+="<DrawBlock x='%d' y='%d' z='6' type='glass' />" % (x,y)
-                for glass_z in range(2,6):
-                    glass_xml+="<DrawBlock x='0' y='%d' z='%d' type='glass' />" % (y,glass_z)
-                    glass_xml+="<DrawBlock x='19' y='%d' z='%d' type='glass' />" % (y,glass_z)
+        for y in range(2, 202):
+            for x in range(0, 20):
+                glass_xml += "<DrawBlock x='%d' y='%d' z='1' type='glass' />" % (
+                    x, y)
+                glass_xml += "<DrawBlock x='%d' y='%d' z='6' type='glass' />" % (
+                    x, y)
+                for glass_z in range(2, 6):
+                    glass_xml += "<DrawBlock x='0' y='%d' z='%d' type='glass' />" % (
+                        y, glass_z)
+                    glass_xml += "<DrawBlock x='19' y='%d' z='%d' type='glass' />" % (
+                        y, glass_z)
         object_xml = ""
-        for init_z in range(2,6):
-            object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(1,200,init_z)
-            object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(2,200,init_z)
-            object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(3,200,init_z)
-        for y in range(197,4,-3):
+        for init_z in range(2, 6):
+            object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                1, 200, init_z)
+            object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                2, 200, init_z)
+            object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                3, 200, init_z)
+        for y in range(197, 4, -3):
             # for _ in range(1,19):
-            first_x = randint(1,17)
-            first_z = randint(2,5)
-            for z in range(first_z,first_z+2):
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(first_x,y,z)
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(first_x+1,y,z)
+            first_x = randint(1, 17)
+            first_z = randint(2, 5)
+            for z in range(first_z, first_z+2):
+                object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                    first_x, y, z)
+                object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                    first_x+1, y, z)
 
             while True:
-                second_x = randint(1,17)
+                second_x = randint(1, 17)
                 if second_x not in range(first_x-3, first_x+3):
                     break
 
-            second_z = randint(2,5)
-            for z in range(second_z,second_z+2):
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(second_x,y,z)
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(second_x+1,y,z)
-
+            second_z = randint(2, 5)
+            for z in range(second_z, second_z+2):
+                object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                    second_x, y, z)
+                object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                    second_x+1, y, z)
 
             while True:
-                third_x = randint(1,17)
+                third_x = randint(1, 17)
                 if third_x not in range(first_x-3, first_x+3) and third_x not in range(second_x-3, second_x+3):
                     break
 
-            third_z = randint(2,5)
-            for z in range(third_z,third_z+2):
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(second_x,y,z)
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(second_x+1,y,z)
+            third_z = randint(2, 5)
+            for z in range(third_z, third_z+2):
+                object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                    third_x, y, z)
+                object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
+                    third_x+1, y, z)
 
         end_xml = ""
-        for i in range(-self.size,self.size+1):
-            end_xml+="<Marker reward='100' x='%d' y='2' z='%d' tolerance='3' />" %(i,i)
+        for i in range(-self.size, self.size+1):
+            end_xml += "<Marker reward='100' x='%d' y='2' z='%d' tolerance='3' />" % (
+                i, i)
 
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -248,11 +262,11 @@ class DiamondCollector(gym.Env):
                         <ServerHandlers>
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
-                                "<DrawCuboid x1='0' x2='19' y1='1' y2='202' z1='1' z2='6' type='air'/>" + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='0' y2='1' z1='{}' z2='{}' type='stone'/>".format(-self.size, self.size, -self.size, self.size) + \
-                                glass_xml + \
-                                object_xml + \
-                                '''<DrawBlock x='0'  y='2' z='0' type='air' />
+            "<DrawCuboid x1='0' x2='19' y1='1' y2='202' z1='1' z2='6' type='air'/>" + \
+            "<DrawCuboid x1='{}' x2='{}' y1='0' y2='1' z1='{}' z2='{}' type='stone'/>".format(-self.size, self.size, -self.size, self.size) + \
+            glass_xml + \
+            object_xml + \
+            '''<DrawBlock x='0'  y='2' z='0' type='air' />
                                 <DrawBlock x='0'  y='1' z='0' type='stone' />
                             </DrawingDecorator>
                             <ServerQuitWhenAnyAgentFinishes/>
@@ -275,8 +289,8 @@ class DiamondCollector(gym.Env):
                                 <Block type="glass" reward="-0.3"/>
                             </RewardForTouchingBlockType>
                             <RewardForReachingPosition>''' +\
-                                end_xml +\
-                            '''</RewardForReachingPosition>
+            end_xml +\
+            '''</RewardForReachingPosition>
                             <ObservationFromFullStats/>
                             <ObservationFromRay/>
                             <ObservationFromChat/>
@@ -293,23 +307,24 @@ class DiamondCollector(gym.Env):
                     </AgentSection>
                 </Mission>'''
 
-
     def init_malmo(self):
         """
         Initialize new malmo mission.
         """
         my_mission = MalmoPython.MissionSpec(self.get_mission_xml(), True)
         my_mission_record = MalmoPython.MissionRecordSpec()
-        my_mission.requestVideo(700,700)
+        my_mission.requestVideo(700, 700)
         my_mission.setViewpoint(1)
 
         max_retries = 3
         my_clients = MalmoPython.ClientPool()
-        my_clients.add(MalmoPython.ClientInfo('127.0.0.1', 10000)) # add Minecraft machines here as available
+        # add Minecraft machines here as available
+        my_clients.add(MalmoPython.ClientInfo('127.0.0.1', 10000))
 
         for retry in range(max_retries):
             try:
-                self.agent_host.startMission( my_mission, my_clients, my_mission_record, 0, 'DiamondCollector' )
+                self.agent_host.startMission(
+                    my_mission, my_clients, my_mission_record, 0, 'DiamondCollector')
                 break
             except RuntimeError as e:
                 if retry == max_retries - 1:
@@ -327,8 +342,7 @@ class DiamondCollector(gym.Env):
 
         return world_state
 
-
-    def get_observation(self,world_state):
+    def get_observation(self, world_state):
         """
         Use the agent observation API to get a 2 x 5 x 5 grid around the agent. 
         The agent is in the center square facing up.
@@ -340,7 +354,7 @@ class DiamondCollector(gym.Env):
             observation: <np.array>
         """
         obs = np.zeros((15, self.obs_size*2+1, self.obs_size*2+1))
-        CUR_POS = (0,0,0)
+        CUR_POS = (0, 0, 0)
         while world_state.is_mission_running:
             time.sleep(0.1)
             world_state = self.agent_host.getWorldState()
@@ -354,14 +368,16 @@ class DiamondCollector(gym.Env):
                 observations = json.loads(msg)
                 # print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
                 # print("%d:%d:%d" % (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos'])))
-                CUR_POS = (int(observations[u'XPos']),int(observations[u'YPos']),int(observations[u'ZPos']))
-                
+                CUR_POS = (int(observations[u'XPos']), int(
+                    observations[u'YPos']), int(observations[u'ZPos']))
+
                 # Get observation
                 # print(observations)
                 grid = observations['floorAll']
                 grid_binary = [1 if x == 'diamond_ore' else 0 for x in grid]
                 # print(grid_binary)
-                obs = np.reshape(grid_binary, (15, self.obs_size*2+1, self.obs_size*2+1))
+                obs = np.reshape(
+                    grid_binary, (15, self.obs_size*2+1, self.obs_size*2+1))
                 # print(obs)
                 # Rotate observation with orientation of agent
                 yaw = observations['Yaw']
@@ -374,8 +390,6 @@ class DiamondCollector(gym.Env):
                 break
 
         return obs, CUR_POS
-
-
 
     def log_returns(self):
         """
@@ -397,7 +411,7 @@ class DiamondCollector(gym.Env):
 
         with open('REALMAN_returns6.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
-                f.write("{}\t{}\n".format(step, value)) 
+                f.write("{}\t{}\n".format(step, value))
 
 
 if __name__ == '__main__':
