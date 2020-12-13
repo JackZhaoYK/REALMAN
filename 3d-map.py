@@ -25,7 +25,7 @@ class DiamondCollector(gym.Env):
         self.reward_density = .1
         self.penalty_density = .02
         self.obs_size = 20
-        self.max_episode_steps = 600
+        self.max_episode_steps = 400
         self.log_frequency = 10
         self.episode_num = 0
         self.quit = False
@@ -228,7 +228,7 @@ class DiamondCollector(gym.Env):
 
         end_xml = ""
         for i in range(-self.size,self.size+1):
-            end_xml+="<Marker reward='100' x='%d' y='2' z='%d' tolerance='2' />" %(i,i)
+            end_xml+="<Marker reward='100' x='%d' y='2' z='%d' tolerance='3' />" %(i,i)
 
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -392,10 +392,10 @@ class DiamondCollector(gym.Env):
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('REALMAN_returns4.png')
+        plt.savefig('REALMAN_returns6.png')
         print("Log saved!")
 
-        with open('REALMAN_returns4.txt', 'w') as f:
+        with open('REALMAN_returns6.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
                 f.write("{}\t{}\n".format(step, value)) 
 
