@@ -30,6 +30,7 @@ class DiamondCollector(gym.Env):
         self.log_frequency = 10
         self.episode_num = 0
         self.quit = False
+        self.reached = False
 
         # Rllib Parameters
         self.action_space = Box(-1, 1, shape=(3,), dtype=np.float32)
@@ -87,6 +88,7 @@ class DiamondCollector(gym.Env):
         self.episode_step = 0
         self.episode_num += 1
         self.quit = False
+        self.reached = False
 
         # Log
         if len(self.returns) > self.log_frequency and \
@@ -160,6 +162,8 @@ class DiamondCollector(gym.Env):
         self.obs, self.temp_pos = self.get_observation(world_state)
 
         reward = 0
+        if self.cur_pos[1] < 3:
+            self.reached = True
         if self.temp_pos == self.cur_pos:
             reward += self.falling_reward(self.cur_pos, self.prev_pos)
             self.prev_pos = self.cur_pos
@@ -172,9 +176,10 @@ class DiamondCollector(gym.Env):
             if r.getValue() < 0:
                 reward += -1
                 # cur_reward.append(-1)
-            if r.getValue() > 90:
-                reward += 100
-                self.quit = True
+        if self.reached:
+            reward += 100
+            self.quit = True
+                # self.quit = True
 
         # print("reward: ",cur_reward)
         self.episode_return += reward
@@ -239,10 +244,10 @@ class DiamondCollector(gym.Env):
                 object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
                     third_x+1, y, z)
 
-        end_xml = ""
-        for i in range(-self.size, self.size+1):
-            end_xml += "<Marker reward='100' x='%d' y='2' z='%d' tolerance='3' />" % (
-                i, i)
+        # end_xml = ""
+        # for i in range(-self.size, self.size+1):
+        #     end_xml += "<Marker reward='100' x='%d' y='2' z='%d' tolerance='3' />" % (
+        #         i, i)
 
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -288,9 +293,6 @@ class DiamondCollector(gym.Env):
                             <RewardForTouchingBlockType>
                                 <Block type="glass" reward="-0.3"/>
                             </RewardForTouchingBlockType>
-                            <RewardForReachingPosition>''' +\
-            end_xml +\
-            '''</RewardForReachingPosition>
                             <ObservationFromFullStats/>
                             <ObservationFromRay/>
                             <ObservationFromChat/>
