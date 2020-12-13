@@ -25,7 +25,7 @@ class DiamondCollector(gym.Env):
         self.reward_density = .1
         self.penalty_density = .02
         self.obs_size = 20
-        self.max_episode_steps = 150
+        self.max_episode_steps = 600
         self.log_frequency = 10
         self.episode_num = 0
 
@@ -62,7 +62,15 @@ class DiamondCollector(gym.Env):
         Returns
             observation: <np.array> flattened initial obseravtion
         """
-        
+        # world_state = self.agent_host.getWorldState()
+        # reward = 0
+        # for r in world_state.rewards:
+        #     if r.getValue() < 0:
+        #         reward += -1
+        #     if r.getValue()>90:
+        #         reward+=100
+        # # print("reward: ",cur_reward)
+        # self.episode_return += reward
 
         # Reset Malmo
         world_state = self.init_malmo()
@@ -157,7 +165,7 @@ class DiamondCollector(gym.Env):
         # print("reward: ",cur_reward)
         self.episode_return += reward
         if reward!=0:
-            self.agent_host.sendCommand("chat Current Reward: "+str(reward))
+            self.agent_host.sendCommand("chat Current Reward: "+str(reward)+"   Total: "+str(self.episode_return))
 
         return self.obs.flatten(), reward, done, dict()
 
@@ -203,7 +211,7 @@ class DiamondCollector(gym.Env):
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
                                 "<DrawCuboid x1='0' x2='19' y1='2' y2='202' z1='1' z2='6' type='air'/>" + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='water'/>".format(-self.size, self.size, -self.size, self.size) + \
+                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='lava'/>".format(-self.size, self.size, -self.size, self.size) + \
                                 glass_xml + \
                                 object_xml + \
                                 '''<DrawBlock x='0'  y='2' z='0' type='air' />
@@ -239,7 +247,7 @@ class DiamondCollector(gym.Env):
                             </ObservationFromGrid>
                             <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps)+'''" />
                             <AgentQuitFromTouchingBlockType>
-                                <Block type="water" description="found_goal"/>
+                                <Block description="found_goal" type="lava"/>
                             </AgentQuitFromTouchingBlockType>
                         </AgentHandlers>
                     </AgentSection>
@@ -344,10 +352,10 @@ class DiamondCollector(gym.Env):
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('REALMAN_returns3.png')
+        plt.savefig('REALMAN_returns4.png')
         print("Log saved!")
 
-        with open('REALMAN_returns3.txt', 'w') as f:
+        with open('REALMAN_returns4.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
                 f.write("{}\t{}\n".format(step, value)) 
 
