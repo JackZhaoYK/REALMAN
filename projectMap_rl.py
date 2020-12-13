@@ -16,11 +16,6 @@ import gym, ray
 from gym.spaces import Discrete, Box
 from ray.rllib.agents import ppo
 
-SIZE = 50
-REWARD_DENSITY = .1
-PENALTY_DENSITY = .02
-OBS_SIZE = 20
-MAX_EPISODE_STEPS = 200
 
 class DiamondCollector(gym.Env):
 
@@ -29,14 +24,13 @@ class DiamondCollector(gym.Env):
         self.size = 50
         self.reward_density = .1
         self.penalty_density = .02
-        self.obs_size = 5
-        self.max_episode_steps = 100
+        self.obs_size = 20
+        self.max_episode_steps = 200
         self.log_frequency = 10
 
         # Rllib Parameters
         self.action_space = Box(-1, 1, shape=(3,), dtype=np.float32)
-        self.observation_space = Box(0, 1, shape=(np.prod([2, self.obs_size, self.obs_size]), ), dtype=np.int32)
-
+        self.observation_space = Box(0, 1, shape=(np.prod([15, self.obs_size*2+1, self.obs_size*2+1]), ), dtype=np.int32)
         # Malmo Parameters
         self.agent_host = MalmoPython.AgentHost()
         try:
@@ -54,6 +48,12 @@ class DiamondCollector(gym.Env):
         self.returns = []
         self.steps = []
 
+        # ADDED
+        self.prev_pos = (0,0,0)
+        self.temp_pos = (0,0,0)
+        self.pos_list =list()
+
+
     def reset(self):
         """
         Resets the environment for the next episode.
@@ -61,10 +61,14 @@ class DiamondCollector(gym.Env):
         Returns
             observation: <np.array> flattened initial obseravtion
         """
+        
+
         # Reset Malmo
         world_state = self.init_malmo()
+        self.pos_list =list()
 
         # Reset Variables
+        print("Current Reward:    ",self.episode_return)
         self.returns.append(self.episode_return)
         current_step = self.steps[-1] if len(self.steps) > 0 else 0
         self.steps.append(current_step + self.episode_step)
@@ -72,14 +76,20 @@ class DiamondCollector(gym.Env):
         self.episode_step = 0
 
         # Log
-        if len(self.returns) > self.log_frequency and \
+        if len(self.returns) >= self.log_frequency and \
             len(self.returns) % self.log_frequency == 0:
             self.log_returns()
 
         # Get Observation
-        self.obs, self.cur_pos = self.get_observation()
+        self.obs, self.cur_pos = self.get_observation(world_state)
+        self.obs, self.temp_pos = self.get_observation(world_state) 
+        self.obs, self.prev_pos = self.get_observation(world_state)
 
         return self.obs.flatten()
+
+    def falling_reward(self, cur, prev):
+        falldown= prev[1] - cur[1] 
+        return -15 if falldown >= 15 else falldown
 
     def step(self, action):
         """
@@ -94,35 +104,57 @@ class DiamondCollector(gym.Env):
             done: <bool> indicates terminal state
             info: <dict> dictionary of extra information
         """
-
+        
         # Get Action
-        if action[2] > 0:  # Move or attack not both
-            # self.agent_host.sendCommand('move 0')
-            # self.agent_host.sendCommand('turn 0')
-            self.agent_host.sendCommand('attack 1')
-            time.sleep(1)  # Allow steve to break the block
-        else:
-            # self.agent_host.sendCommand('attack 0')
+        if action[1] > 0.5:
+
             self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
-            self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
-            time.sleep(.2)
+            time.sleep(0.2)
+            self.agent_host.sendCommand('turn 1')
+            time.sleep(0.2)
+            self.agent_host.sendCommand('turn 1')
+            time.sleep(1)
+        elif action[1] < -0.5:
+            self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
+            time.sleep(0.2)
+            self.agent_host.sendCommand('turn -1')
+            time.sleep(0.2)
+            self.agent_host.sendCommand('turn -1')
+            time.sleep(1)
+        else:
+            self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
+            time.sleep(0.2)
+
+        # self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
         self.episode_step += 1
 
         # Get Observation
         world_state = self.agent_host.getWorldState()
         for error in world_state.errors:
             print("Error:", error.text)
-        self.obs, self.cur_pos = self.get_observation() 
-
+        self.obs, self.cur_pos = self.get_observation(world_state) 
+        self.pos_list.append(self.cur_pos)
+        print("STEP: ",len(self.pos_list))
         # Get Done
         
         done = not world_state.is_mission_running 
 
         # Get Reward
+        time.sleep(0.1)
+        self.obs, self.temp_pos = self.get_observation(world_state) 
+
         reward = 0
+        if self.temp_pos == self.cur_pos:
+            reward += self.falling_reward(self.cur_pos, self.prev_pos)
+            self.prev_pos = self.cur_pos
+        else:
+            print("Diff: CUR: {}, PREV: {}".format(self.cur_pos, self.temp_pos))
+
         for r in world_state.rewards:
             reward += r.getValue()
         self.episode_return += reward
+        if reward!=0:
+            self.agent_host.sendCommand("chat Current Reward: "+str(reward))
 
         return self.obs.flatten(), reward, done, dict()
 
@@ -136,7 +168,7 @@ class DiamondCollector(gym.Env):
                 glass_xml+="<DrawBlock x='0' y='%d' z='2' type='glass' />" % (y)
                 glass_xml+="<DrawBlock x='19' y='%d' z='2' type='glass' />" % (y)
         object_xml = ""
-         # first block
+
         object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(1,200)
         object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(2,200)
         object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(3,200)
@@ -146,12 +178,12 @@ class DiamondCollector(gym.Env):
             object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x,y)
             object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+1,y)
             object_xml+="<DrawBlock x='%d' y='%d' z='2' type='diamond_ore' />" %(x+2,y)
-        
+
         return '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
                     <About>
-                        <Summary>Diamond Collector</Summary>
+                        <Summary>REALMAN</Summary>
                     </About>
 
                     <ServerSection>
@@ -166,7 +198,7 @@ class DiamondCollector(gym.Env):
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
                                 "<DrawCuboid x1='0' x2='19' y1='2' y2='202' z1='1' z2='3' type='air'/>" + \
-                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='lava'/>".format(-SIZE, SIZE, -SIZE, SIZE) + \
+                                "<DrawCuboid x1='{}' x2='{}' y1='1' y2='1' z1='{}' z2='{}' type='lava'/>".format(-self.size, self.size, -self.size, self.size) + \
                                 glass_xml + \
                                 object_xml + \
                                 '''<DrawBlock x='0'  y='2' z='0' type='air' />
@@ -186,25 +218,21 @@ class DiamondCollector(gym.Env):
                         </AgentStart>
                         <AgentHandlers>
                             <ChatCommands />
-                            <RewardForCollectingItem>
-                                <Item reward="1" type="diamond"/>
-                            </RewardForCollectingItem>
                             <RewardForTouchingBlockType>
-                                <Block type="lava" reward="100"/>
-                                <Block type="glass" reward="-100"/>
+                                <Block type="glass" reward="-1"/>
                             </RewardForTouchingBlockType>
                             <RewardForMissionEnd>
-                                <Reward description="found_goal" reward="1000" />
+                                <Reward description="found_goal" reward="100" />
                             </RewardForMissionEnd>
                             <DiscreteMovementCommands/>
                             <ObservationFromFullStats/>
                             <ObservationFromGrid>
                                 <Grid name="floorAll">
-                                    <min x="-'''+str(OBS_SIZE)+'''" y="-14" z="-'''+str(OBS_SIZE)+'''"/>
-                                    <max x="'''+str(OBS_SIZE)+'''" y="0" z="'''+str(OBS_SIZE)+'''"/>
+                                    <min x="-'''+str(self.obs_size)+'''" y="-14" z="-'''+str(self.obs_size)+'''"/>
+                                    <max x="'''+str(self.obs_size)+'''" y="0" z="'''+str(self.obs_size)+'''"/>
                                 </Grid>
                             </ObservationFromGrid>
-                            <AgentQuitFromReachingCommandQuota total="'''+str(MAX_EPISODE_STEPS)+'''" />
+                            <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps)+'''" />
                             <AgentQuitFromTouchingBlockType>
                                 <Block type="lava" description="found_goal"/>
                             </AgentQuitFromTouchingBlockType>
@@ -219,7 +247,7 @@ class DiamondCollector(gym.Env):
         """
         my_mission = MalmoPython.MissionSpec(self.get_mission_xml(), True)
         my_mission_record = MalmoPython.MissionRecordSpec()
-        my_mission.requestVideo(800, 500)
+        my_mission.requestVideo(512,512)
         my_mission.setViewpoint(1)
 
         max_retries = 3
@@ -246,7 +274,8 @@ class DiamondCollector(gym.Env):
 
         return world_state
 
-    def get_observation(self):
+
+    def get_observation(self,world_state):
         """
         Use the agent observation API to get a 2 x 5 x 5 grid around the agent. 
         The agent is in the center square facing up.
@@ -257,11 +286,11 @@ class DiamondCollector(gym.Env):
         Returns
             observation: <np.array>
         """
-        obs = np.zeros((15, OBS_SIZE*2+1, OBS_SIZE*2+1))
+        obs = np.zeros((15, self.obs_size*2+1, self.obs_size*2+1))
         CUR_POS = (0,0,0)
         while world_state.is_mission_running:
             time.sleep(0.1)
-            world_state = agent_host.getWorldState()
+            world_state = self.agent_host.getWorldState()
             if len(world_state.errors) > 0:
                 raise AssertionError('Could not load grid.')
 
@@ -279,7 +308,7 @@ class DiamondCollector(gym.Env):
                 grid = observations['floorAll']
                 grid_binary = [1 if x == 'diamond_ore' else 0 for x in grid]
                 # print(grid_binary)
-                obs = np.reshape(grid_binary, (15, OBS_SIZE*2+1, OBS_SIZE*2+1))
+                obs = np.reshape(grid_binary, (15, self.obs_size*2+1, self.obs_size*2+1))
                 # print(obs)
                 # Rotate observation with orientation of agent
                 yaw = observations['Yaw']
@@ -289,7 +318,6 @@ class DiamondCollector(gym.Env):
                     obs = np.rot90(obs, k=2, axes=(1, 2))
                 elif yaw == 90:
                     obs = np.rot90(obs, k=3, axes=(1, 2))
-                
                 break
 
         return obs, CUR_POS
@@ -308,10 +336,10 @@ class DiamondCollector(gym.Env):
         returns_smooth = np.convolve(self.returns, box, mode='same')
         plt.clf()
         plt.plot(self.steps, returns_smooth)
-        plt.title('Diamond Collector')
+        plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('returns.png')
+        plt.savefig('REALMAN_returns.png')
 
         with open('returns.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
