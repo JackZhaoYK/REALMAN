@@ -199,11 +199,22 @@ class DiamondCollector(gym.Env):
             object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(3,200,init_z)
         for y in range(197,4,-3):
             # for _ in range(1,19):
-            x = randint(1,17)
-            for z in range(2,6):
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(x,y,z)
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(x+1,y,z)
-                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(x+2,y,z)
+            first_x = randint(1,17)
+            first_z = randint(2,5)
+            for z in range(first_z,first_z+2):
+                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(first_x,y,z)
+                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(first_x+1,y,z)
+
+            while True:
+                second_x = randint(1,17)
+                if second_x not in range(first_x-3, first_x+3):
+                    break
+
+            second_z = randint(2,5)
+            for z in range(second_z,second_z+2):
+                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(second_x,y,z)
+                object_xml+="<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" %(second_x+1,y,z)
+
         end_xml = ""
         for i in range(-self.size,self.size+1):
             end_xml+="<Marker reward='100' x='%d' y='2' z='%d' tolerance='2' />" %(i,i)
