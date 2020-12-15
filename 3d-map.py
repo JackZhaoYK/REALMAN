@@ -16,7 +16,7 @@ import gym
 import ray
 from gym.spaces import Discrete, Box
 from ray.rllib.agents import ppo
-
+import math
 
 class DiamondCollector(gym.Env):
 
@@ -105,7 +105,10 @@ class DiamondCollector(gym.Env):
 
     def falling_reward(self, cur, prev):
         falldown = prev[1] - cur[1]
-        return -15 if falldown > 15 else falldown
+        # print(prev[1])
+        # print(cur[1])
+
+        return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 
     def step(self, action):
         """
@@ -191,7 +194,7 @@ class DiamondCollector(gym.Env):
     def get_mission_xml(self):
 
         glass_xml = ""
-        for y in range(2, 202):
+        for y in range(2, 252):
             for x in range(0, 20):
                 glass_xml += "<DrawBlock x='%d' y='%d' z='1' type='glass' />" % (
                     x, y)
@@ -205,11 +208,11 @@ class DiamondCollector(gym.Env):
         object_xml = ""
         for init_z in range(3, 5):
             object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
-                9, 200, init_z)
+                9, 250, init_z)
             object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
-                10, 200, init_z)
+                10, 250, init_z)
 
-        for y in range(197, 4, -3):
+        for y in range(247, 4, -3):
             # for _ in range(1,19):
             first_x = randint(1, 17)
             first_z = randint(2, 5)
@@ -266,7 +269,7 @@ class DiamondCollector(gym.Env):
                         <ServerHandlers>
                             <FlatWorldGenerator generatorString="3;7,2;1;"/>
                             <DrawingDecorator>''' + \
-            "<DrawCuboid x1='0' x2='19' y1='1' y2='202' z1='1' z2='6' type='air'/>" + \
+            "<DrawCuboid x1='0' x2='19' y1='1' y2='252' z1='1' z2='6' type='air'/>" + \
             "<DrawCuboid x1='{}' x2='{}' y1='0' y2='1' z1='{}' z2='{}' type='stone'/>".format(-self.size, self.size, -self.size, self.size) + \
             glass_xml + \
             object_xml + \
@@ -280,7 +283,7 @@ class DiamondCollector(gym.Env):
                     <AgentSection mode="Creative">
                         <Name>J</Name>
                         <AgentStart>
-                            <Placement x="9.5" y="201" z="3.5" pitch="0" yaw="90"/>
+                            <Placement x="9.5" y="251" z="3.5" pitch="0" yaw="90"/>
                             <Inventory>
                                 <InventoryItem slot="0" type="diamond_pickaxe"/>
                             </Inventory>
@@ -407,10 +410,10 @@ class DiamondCollector(gym.Env):
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('REALMAN_returns7.png')
+        plt.savefig('REALMAN_returns8.png')
         print("Log saved!")
 
-        with open('REALMAN_returns7.txt', 'w') as f:
+        with open('REALMAN_returns8.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
                 f.write("{}\t{}\n".format(step, value))
 
@@ -425,6 +428,9 @@ if __name__ == '__main__':
         'num_workers': 0            # We aren't using parallelism
     })
     train_time = 1
+    file = open("trainLog.txt","w")
+    file.write("Start\n")
+    file.close()
     while True:
         log = trainer.train()
         file = open("trainLog.txt","a")
@@ -434,4 +440,3 @@ if __name__ == '__main__':
         file.close()
         print("Trained  "+str(train_time)+" times")
         train_time+=1
-
