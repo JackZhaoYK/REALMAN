@@ -105,7 +105,7 @@ class DiamondCollector(gym.Env):
 
     def falling_reward(self, cur, prev):
         falldown = prev[1] - cur[1]
-        return -15 if falldown >= 15 else falldown
+        return -15 if falldown > 15 else falldown
 
     def step(self, action):
         """
@@ -203,13 +203,12 @@ class DiamondCollector(gym.Env):
                     glass_xml += "<DrawBlock x='19' y='%d' z='%d' type='glass' />" % (
                         y, glass_z)
         object_xml = ""
-        for init_z in range(2, 6):
+        for init_z in range(3, 5):
             object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
-                1, 200, init_z)
+                9, 200, init_z)
             object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
-                2, 200, init_z)
-            object_xml += "<DrawBlock x='%d' y='%d' z='%d' type='diamond_ore' />" % (
-                3, 200, init_z)
+                10, 200, init_z)
+
         for y in range(197, 4, -3):
             # for _ in range(1,19):
             first_x = randint(1, 17)
@@ -281,7 +280,7 @@ class DiamondCollector(gym.Env):
                     <AgentSection mode="Creative">
                         <Name>J</Name>
                         <AgentStart>
-                            <Placement x="2.5" y="201" z="2.5" pitch="0" yaw="90"/>
+                            <Placement x="9.5" y="201" z="3.5" pitch="0" yaw="90"/>
                             <Inventory>
                                 <InventoryItem slot="0" type="diamond_pickaxe"/>
                             </Inventory>
