@@ -27,7 +27,7 @@ class DiamondCollector(gym.Env):
         self.penalty_density = .02
         self.obs_size = 10
         self.max_episode_steps = 400
-        self.log_frequency = 10
+        self.log_frequency = 1
         self.episode_num = 0
         self.quit = False
         self.reached = False
@@ -93,7 +93,7 @@ class DiamondCollector(gym.Env):
         # Log
         if len(self.returns) > self.log_frequency and \
                 len(self.returns) % self.log_frequency == 0:
-            print("Now we should have our log!")
+            # print("Now we should have our log!")
             self.log_returns()
 
         # Get Observation
@@ -144,7 +144,7 @@ class DiamondCollector(gym.Env):
         self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
         self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
         # self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
-        time.sleep(2)
+        time.sleep(.2)
 
         # self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
         self.episode_step += 1
@@ -171,7 +171,7 @@ class DiamondCollector(gym.Env):
             reward += self.falling_reward(self.cur_pos, self.prev_pos)
             self.prev_pos = self.cur_pos
         else:
-            pass
+            time.sleep(2)
             # print("Diff: CUR: {}, PREV: {}".format(self.cur_pos, self.temp_pos))
         # cur_reward =[]
 
@@ -180,7 +180,7 @@ class DiamondCollector(gym.Env):
                 reward += -1
                 # cur_reward.append(-1)
         if self.reached:
-            reward += 100
+            # reward += 100
             self.quit = True
                 # self.quit = True
 
@@ -410,10 +410,10 @@ class DiamondCollector(gym.Env):
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('REALMAN_returns8.png')
-        print("Log saved!")
+        plt.savefig('REALMAN_returns11.png')
+        # print("Log saved!")
 
-        with open('REALMAN_returns8.txt', 'w') as f:
+        with open('REALMAN_returns11.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
                 f.write("{}\t{}\n".format(step, value))
 
@@ -426,8 +426,8 @@ if __name__ == '__main__':
         'framework': 'torch',       # Use pyotrch instead of tensorflow
         'num_gpus': 0,              # We aren't using GPUs
         'num_workers': 0,
-        "evaluation_num_episodes": 1,
-        'lr' : 0.001
+        # "evaluation_num_episodes": 1,
+        "train_batch_size": 500,
 
                   # We aren't using parallelism
     })
