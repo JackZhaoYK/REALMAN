@@ -345,7 +345,7 @@ class DiamondCollector(gym.Env):
 
     def get_observation(self, world_state):
         """
-        Use the agent observation API to get a 2 x 5 x 5 grid around the agent. 
+        Use the agent observation API to get a 15 x 5 x 5 grid around the agent. 
         The agent is in the center square facing up.
 
         Args
@@ -421,8 +421,11 @@ if __name__ == '__main__':
     trainer = ppo.PPOTrainer(env=DiamondCollector, config={
         'env_config': {},           # No environment parameters to configure
         'framework': 'torch',       # Use pyotrch instead of tensorflow
-        'num_gpus': 2,              # We aren't using GPUs
-        'num_workers': 0            # We aren't using parallelism
+        'num_gpus': 0,              # We aren't using GPUs
+        'num_workers': 0,
+        "evaluation_num_episodes": 1
+
+                  # We aren't using parallelism
     })
     train_time = 1
     while True:
