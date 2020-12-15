@@ -141,7 +141,7 @@ class DiamondCollector(gym.Env):
         self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
         self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
         # self.agent_host.sendCommand('move {:30.1f}'.format(action[0]))
-        time.sleep(.2)
+        time.sleep(2)
 
         # self.agent_host.sendCommand('turn {:30.1f}'.format(action[1]))
         self.episode_step += 1
@@ -288,7 +288,7 @@ class DiamondCollector(gym.Env):
                         </AgentStart>
                         <AgentHandlers>
                             <ChatCommands />
-                            <ContinuousMovementCommands/>
+                            <DiscreteMovementCommands/>
                             <MissionQuitCommands/>
                             <RewardForTouchingBlockType>
                                 <Block type="glass" reward="-0.3"/>
@@ -408,15 +408,16 @@ class DiamondCollector(gym.Env):
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('REALMAN_returns6.png')
+        plt.savefig('REALMAN_returns7.png')
         print("Log saved!")
 
-        with open('REALMAN_returns6.txt', 'w') as f:
+        with open('REALMAN_returns7.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
                 f.write("{}\t{}\n".format(step, value))
 
 
 if __name__ == '__main__':
+    # address='auto', _redis_password='5241590000000000', 
     ray.init()
     trainer = ppo.PPOTrainer(env=DiamondCollector, config={
         'env_config': {},           # No environment parameters to configure
@@ -424,6 +425,14 @@ if __name__ == '__main__':
         'num_gpus': 2,              # We aren't using GPUs
         'num_workers': 0            # We aren't using parallelism
     })
-
+    train_time = 1
     while True:
-        print(trainer.train())
+        log = trainer.train()
+        file = open("trainLog.txt","a")
+        file.write("------------Train Time: "+str(train_time)+"---------\n\n\n")
+        file.write(str(log))
+        file.write("\n\n\n")
+        file.close()
+        print("Trained  "+str(train_time)+" times")
+        train_time+=1
+
