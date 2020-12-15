@@ -25,7 +25,7 @@ class DiamondCollector(gym.Env):
         self.size = 50
         self.reward_density = .1
         self.penalty_density = .02
-        self.obs_size = 20
+        self.obs_size = 10
         self.max_episode_steps = 400
         self.log_frequency = 1
         self.episode_num = 0
@@ -35,7 +35,7 @@ class DiamondCollector(gym.Env):
         # Rllib Parameters
         self.action_space = Box(-1, 1, shape=(3,), dtype=np.float32)
         self.observation_space = Box(0, 1, shape=(
-            np.prod([15, 11, 11]), ), dtype=np.int32)
+            np.prod([15, self.obs_size+1, self.obs_size+1]), ), dtype=np.int32)
         # Malmo Parameters
         self.agent_host = MalmoPython.AgentHost()
         try:
@@ -302,8 +302,8 @@ class DiamondCollector(gym.Env):
 
                             <ObservationFromGrid>
                                 <Grid name="floorAll">
-                                    <min x="-'''+str(5)+'''" y="-14" z="-'''+str(5)+'''"/>
-                                    <max x="'''+str(5)+'''" y="0" z="'''+str(5)+'''"/>
+                                    <min x="-'''+str(self.obs_size/2)+'''" y="-14" z="-'''+str(self.obs_size/2)+'''"/>
+                                    <max x="'''+str(self.obs_size/2)+'''" y="0" z="'''+str(self.obs_size/2)+'''"/>
                                 </Grid>
                             </ObservationFromGrid>
                             <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps)+'''" />
@@ -357,7 +357,7 @@ class DiamondCollector(gym.Env):
         Returns
             observation: <np.array>
         """
-        obs = np.zeros((15, 11, 11))
+        obs = np.zeros((15, self.obs_size, self.obs_size))
         CUR_POS = (0, 0, 0)
         while world_state.is_mission_running:
             time.sleep(0.1)
@@ -381,7 +381,7 @@ class DiamondCollector(gym.Env):
                 grid_binary = [1 if x == 'diamond_ore' else 0 for x in grid]
                 # print(grid_binary)
                 obs = np.reshape(
-                    grid_binary, (15, 11, 11))
+                    grid_binary, (15, self.obs_size+1, self.obs_size+1))
                 # print(obs)
                 # Rotate observation with orientation of agent
                 yaw = observations['Yaw']
