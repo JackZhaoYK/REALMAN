@@ -182,6 +182,7 @@ class DiamondCollector(gym.Env):
         if self.reached:
             # reward += 100
             self.quit = True
+            time.sleep(2)
                 # self.quit = True
 
         # print("reward: ",cur_reward)
