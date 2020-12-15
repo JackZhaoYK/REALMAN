@@ -410,10 +410,10 @@ class DiamondCollector(gym.Env):
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('REALMAN_returns8.png')
+        plt.savefig('REALMAN_returns9.png')
         print("Log saved!")
 
-        with open('REALMAN_returns8.txt', 'w') as f:
+        with open('REALMAN_returns9.txt', 'w') as f:
             for step, value in zip(self.steps, self.returns):
                 f.write("{}\t{}\n".format(step, value))
 
@@ -426,7 +426,8 @@ if __name__ == '__main__':
         'framework': 'torch',       # Use pyotrch instead of tensorflow
         'num_gpus': 0,              # We aren't using GPUs
         'num_workers': 0,
-        "evaluation_num_episodes": 1
+        "evaluation_num_episodes": 1,
+        "train_batch_size": 200
 
                   # We aren't using parallelism
     })
