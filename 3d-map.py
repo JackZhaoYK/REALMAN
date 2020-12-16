@@ -18,6 +18,9 @@ from gym.spaces import Discrete, Box
 from ray.rllib.agents import ppo
 import math
 
+
+
+
 class DiamondCollector(gym.Env):
 
     def __init__(self, env_config):
@@ -25,7 +28,7 @@ class DiamondCollector(gym.Env):
         self.size = 50
         self.reward_density = .1
         self.penalty_density = .02
-        self.obs_size = 10
+        self.obs_size = 8
         self.max_episode_steps = 400
         self.log_frequency = 1
         self.episode_num = 0
@@ -39,7 +42,8 @@ class DiamondCollector(gym.Env):
         # Malmo Parameters
         self.agent_host = MalmoPython.AgentHost()
         try:
-            self.agent_host.parse(sys.argv)
+            print(sys.argv)
+            # self.agent_host.parse(sys.argv)
         except RuntimeError as e:
             print('ERROR:', e)
             print(self.agent_host.getUsage())
@@ -74,6 +78,7 @@ class DiamondCollector(gym.Env):
         #         reward+=100
         # # print("reward: ",cur_reward)
         # self.episode_return += reward
+        global RETURN, STEP
 
         # Reset Malmo
         world_state = self.init_malmo()
@@ -82,8 +87,20 @@ class DiamondCollector(gym.Env):
         print("Episode:  ", self.episode_num, "Step:  ",
               self.episode_step, "Reward:  ", self.episode_return)
         self.returns.append(self.episode_return)
+
+        #main graph return
+        RETURN.append(self.episode_return)
+
         current_step = self.steps[-1] if len(self.steps) > 0 else 0
         self.steps.append(current_step + self.episode_step)
+
+        #main graph step
+        current_step = STEP[-1] if len(STEP) > 0 else 0
+        STEP.append(current_step + self.episode_step)
+
+        print(RETURN)
+        print(id(RETURN))
+
         self.episode_return = 0
         self.episode_step = 0
         self.episode_num += 1
@@ -108,7 +125,7 @@ class DiamondCollector(gym.Env):
         # print(prev[1])
         # print(cur[1])
 
-        return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
+        return -5 if falldown >= 15 else math.ceil(falldown*falldown/10)
 
     def step(self, action):
         """
@@ -302,8 +319,8 @@ class DiamondCollector(gym.Env):
 
                             <ObservationFromGrid>
                                 <Grid name="floorAll">
-                                    <min x="-'''+str(self.obs_size/2)+'''" y="-14" z="-'''+str(self.obs_size/2)+'''"/>
-                                    <max x="'''+str(self.obs_size/2)+'''" y="0" z="'''+str(self.obs_size/2)+'''"/>
+                                    <min x="-'''+str(self.obs_size/2)+'''" y="-15" z="-'''+str(self.obs_size/2)+'''"/>
+                                    <max x="'''+str(self.obs_size/2)+'''" y="-1" z="'''+str(self.obs_size/2)+'''"/>
                                 </Grid>
                             </ObservationFromGrid>
                             <AgentQuitFromReachingCommandQuota total="'''+str(self.max_episode_steps)+'''" />
@@ -323,7 +340,8 @@ class DiamondCollector(gym.Env):
         max_retries = 3
         my_clients = MalmoPython.ClientPool()
         # add Minecraft machines here as available
-        my_clients.add(MalmoPython.ClientInfo('127.0.0.1', 10000))
+        for i in [10000,10001,10002,10003]:
+            my_clients.add(MalmoPython.ClientInfo('127.0.0.1', i))
 
         for retry in range(max_retries):
             try:
@@ -403,10 +421,13 @@ class DiamondCollector(gym.Env):
             steps (list): list of global steps after each episode
             returns (list): list of total return of each episode
         """
+
+        global RETURN, STEP
+        
         box = np.ones(self.log_frequency) / self.log_frequency
-        returns_smooth = np.convolve(self.returns, box, mode='same')
+        returns_smooth = np.convolve(RETURN, box, mode='same')
         plt.clf()
-        plt.plot(self.steps, returns_smooth)
+        plt.plot(STEP, returns_smooth)
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
@@ -414,20 +435,28 @@ class DiamondCollector(gym.Env):
         # print("Log saved!")
 
         with open('REALMAN_returns11.txt', 'w') as f:
-            for step, value in zip(self.steps, self.returns):
+            for step, value in zip(STEP, RETURN):
                 f.write("{}\t{}\n".format(step, value))
 
 
 if __name__ == '__main__':
+
+
+    RETURN = []
+    STEP = []
+
     # address='auto', _redis_password='5241590000000000', 
     ray.init()
     trainer = ppo.PPOTrainer(env=DiamondCollector, config={
         'env_config': {},           # No environment parameters to configure
         'framework': 'torch',       # Use pyotrch instead of tensorflow
         'num_gpus': 0,              # We aren't using GPUs
-        'num_workers': 0,
+        'num_workers': 3,
         # "evaluation_num_episodes": 1,
         "train_batch_size": 500,
+        'lr' : 0.001
+        # 'memory' : 3.2e+10,
+        # "memory_per_worker": 1.024e+9,
 
                   # We aren't using parallelism
     })
