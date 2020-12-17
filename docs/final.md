@@ -34,4 +34,11 @@ TBC
 
 ## References
 
-TBC
+#### [XML Schema Documentation](http://microsoft.github.io/malmo/0.14.0/Schemas/MissionHandlers.html)
+
+#### [Project Malmo](https://github.com/microsoft/malmo)
+
+#### [TA Kolby Nottingham's Code for Assignment 2 with RLlib](https://campuspro-uploads.s3.us-west-2.amazonaws.com/ad12d7f8-a456-4244-bd96-18be6a728aca/662f51cc-2587-4f7f-b5af-a59aff45727c/assignment2_rllib_cont.py)
+
+#### [Proximal Policy Optimization (PPO) in RLlib in Ray](https://docs.ray.io/en/latest/rllib-algorithms.html#ppo)
+
