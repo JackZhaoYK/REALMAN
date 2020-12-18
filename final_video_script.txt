@@ -1,0 +1,22 @@
+[title]
+[vid of map preview]
+In the modern world, people use autonomous vaccum to do housework. A new feature of cliff detection has been used as an additional sensing technology for safety. Now I'm showing you the map and gameplay of our project. It is a downhill survival game in Minecraft, which asks the agent to go down the map as many levels as possible within limited steps. The agent can look down five floors in order to determine the next step. Once the player reaches the bottom of the map, the map will be regenerated. Rewards are given for each level the player goes down, and penalties are applied for touching the map boundary and dropping more than five levels at a time. The agent is expected to have higher rewards for optimization.
+
+Different from the path searching game and item collecting game, we are trying to build up a universal strategy that can deal with any randomized map. To simulate the real-world status, we choose a 3D map that allows the agent to move in five directions. The agent would be born at the top of a 100-floor building, where each level has a width of 4 blocks and a length of 16 blocks. By using the shown algorithm, we randomly place three pieces of 2 by 2 tile on each floor to avoid unexpected cliffs.
+
+To calculate the movement in a three dimensions world, we choose the PPO algorithm implemented in RL lib. Normally, PPO is said to have a better convergence and performance rather than a simple DQN model. However, it is important to note that the PPO algorithm was run much longer than the DQN algorithm. So while it may yield better results. It is much slower. 
+
+Besides, rewards and penalties are applied through XML and our falling function. Currently, we set a constant penalty for falling over five floors because it's out of the agent's observation range. Then, the reward is set as an exponential function if the falling is within 5 floors, which means we encourage the agent to jump more floors as it can. To optimize the efficiency, we also add a penalty for moving toward the wall. It is worth mentioning that we had a reward for reaching the bottom but we eventually deleted it because we found it made the agent less sensitive to the falling reward. 
+
+[vid of performance]
+Here is a comparison between the baseline performs and our best performs. The latter one is episode 446 that happens around 18,000 steps. We modify the batch size of the PPO trainer to train the agent every 600 steps. Where each step took near two seconds, which restricts us to completing 34 times of training during half-day machine learning. 
+As you can see, the agent could move in four directions and choose the tile of higher reward. Meanwhile, it moves slowly and rarely jumps over five floors. As our expectations, it has become a smart robot!
+
+However, the final graph is not ideal and does not even see any growth trend. We spent a lot of time modifying our code and testing each component. This has almost become an impossible task until we found the log frequency setting of plotting. Oh, magic is about to happen.
+
+
+That's impressive, right? We could see there is a perfect growth line. 
+
+
+After that, we found using the mean reward of each episode would be more reasonable. Here's the graph and it looks prettier and more intuitive than the previos graph but it's still not perfect. By reusing the saved log, we also deployed the graph of the total loss value. It shows that there's sometimes a significant downward trend when getting a large loss value. The problem happens because of the ability of our computers. We found that PPO needs more time for each step than DQN. If there are enough learning times and enough steps, the return value will be better.
+
