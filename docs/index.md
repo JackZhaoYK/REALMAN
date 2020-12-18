@@ -15,11 +15,17 @@ He was not the first robot who fell down from the stairs. Differently, Steve jum
 No one has ever complete the tasks, but Steve thinks he can. Because he's a REALMAN.
 
 # Source code: 
-https://github.com/JackZhaoYK/REALMAN
+[GitHub Repo](https://github.com/JackZhaoYK/REALMAN)
+
 
 # Reports:
 - [Proposal](proposal.md)
 - [Status](status.md)
 - [Final](final.md)
 
+# Members:
+[Team Details](team.md)
+
+# Group Meeting Time:
+10:00 PM PST on Wednesdays and Sundays
 
