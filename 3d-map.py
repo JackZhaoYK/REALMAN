@@ -18,9 +18,6 @@ from gym.spaces import Discrete, Box
 from ray.rllib.agents import ppo
 import math
 
-
-
-
 class DiamondCollector(gym.Env):
 
     def __init__(self, env_config):
@@ -28,7 +25,7 @@ class DiamondCollector(gym.Env):
         self.size = 50
         self.reward_density = .1
         self.penalty_density = .02
-        self.obs_size = 8
+        self.obs_size = 6
         self.max_episode_steps = 400
         self.log_frequency = 1
         self.episode_num = 0
@@ -42,8 +39,7 @@ class DiamondCollector(gym.Env):
         # Malmo Parameters
         self.agent_host = MalmoPython.AgentHost()
         try:
-            print(sys.argv)
-            # self.agent_host.parse(sys.argv)
+            self.agent_host.parse(sys.argv)
         except RuntimeError as e:
             print('ERROR:', e)
             print(self.agent_host.getUsage())
@@ -60,7 +56,7 @@ class DiamondCollector(gym.Env):
         # ADDED
         self.prev_pos = (0, 0, 0)
         self.temp_pos = (0, 0, 0)
-        self.pos_list = list()
+        # self.pos_list = list()
 
     def reset(self):
         """
@@ -78,7 +74,6 @@ class DiamondCollector(gym.Env):
         #         reward+=100
         # # print("reward: ",cur_reward)
         # self.episode_return += reward
-        global RETURN, STEP
 
         # Reset Malmo
         world_state = self.init_malmo()
@@ -87,20 +82,8 @@ class DiamondCollector(gym.Env):
         print("Episode:  ", self.episode_num, "Step:  ",
               self.episode_step, "Reward:  ", self.episode_return)
         self.returns.append(self.episode_return)
-
-        #main graph return
-        RETURN.append(self.episode_return)
-
         current_step = self.steps[-1] if len(self.steps) > 0 else 0
         self.steps.append(current_step + self.episode_step)
-
-        #main graph step
-        current_step = STEP[-1] if len(STEP) > 0 else 0
-        STEP.append(current_step + self.episode_step)
-
-        print(RETURN)
-        print(id(RETURN))
-
         self.episode_return = 0
         self.episode_step = 0
         self.episode_num += 1
@@ -125,7 +108,7 @@ class DiamondCollector(gym.Env):
         # print(prev[1])
         # print(cur[1])
 
-        return -5 if falldown >= 15 else math.ceil(falldown*falldown/10)
+        return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 
     def step(self, action):
         """
@@ -171,7 +154,7 @@ class DiamondCollector(gym.Env):
         for error in world_state.errors:
             print("Error:", error.text)
         self.obs, self.cur_pos = self.get_observation(world_state)
-        self.pos_list.append(self.cur_pos)
+        # self.pos_list.append(self.cur_pos)
         # print("STEP: ",len(self.pos_list))
         # Get Done
 
@@ -180,15 +163,20 @@ class DiamondCollector(gym.Env):
         # Get Reward
         time.sleep(0.1)
         self.obs, self.temp_pos = self.get_observation(world_state)
+        while self.temp_pos!=self.cur_pos:
+            time.sleep(0.2)
+            self.obs, self.cur_pos = self.get_observation(world_state)
+            time.sleep(0.1)
+            self.obs, self.temp_pos = self.get_observation(world_state)
 
         reward = 0
         if self.cur_pos[1] < 3:
             self.reached = True
-        if self.temp_pos == self.cur_pos:
-            reward += self.falling_reward(self.cur_pos, self.prev_pos)
-            self.prev_pos = self.cur_pos
-        else:
-            time.sleep(2)
+        # if self.temp_pos == self.cur_pos:
+        reward += self.falling_reward(self.cur_pos, self.prev_pos)
+        self.prev_pos = self.cur_pos
+        # else:
+        #     time.sleep(1)
             # print("Diff: CUR: {}, PREV: {}".format(self.cur_pos, self.temp_pos))
         # cur_reward =[]
 
@@ -199,7 +187,7 @@ class DiamondCollector(gym.Env):
         if self.reached:
             # reward += 100
             self.quit = True
-            time.sleep(2)
+            # time.sleep(2)
                 # self.quit = True
 
         # print("reward: ",cur_reward)
@@ -335,14 +323,13 @@ class DiamondCollector(gym.Env):
         """
         my_mission = MalmoPython.MissionSpec(self.get_mission_xml(), True)
         my_mission_record = MalmoPython.MissionRecordSpec()
-        my_mission.requestVideo(700, 700)
+        my_mission.requestVideo(100, 100)
         my_mission.setViewpoint(1)
 
         max_retries = 3
         my_clients = MalmoPython.ClientPool()
         # add Minecraft machines here as available
-        for i in [10000,10001,10002,10003]:
-            my_clients.add(MalmoPython.ClientInfo('127.0.0.1', i))
+        my_clients.add(MalmoPython.ClientInfo('127.0.0.1', 10000))
 
         for retry in range(max_retries):
             try:
@@ -422,52 +409,46 @@ class DiamondCollector(gym.Env):
             steps (list): list of global steps after each episode
             returns (list): list of total return of each episode
         """
-
-        global RETURN, STEP
-        
-        box = np.ones(self.log_frequency) / self.log_frequency
-        returns_smooth = np.convolve(RETURN, box, mode='same')
+        if len(self.returns)>=10:
+            box = np.ones(10) / 10
+        else:
+            box = np.ones(1)/1
+        returns_smooth = np.convolve(self.returns, box, mode='same')
         plt.clf()
-        plt.plot(STEP, returns_smooth)
+        plt.plot(self.steps, returns_smooth)
         plt.title('REALMAN')
         plt.ylabel('Return')
         plt.xlabel('Steps')
-        plt.savefig('REALMAN_returns11.png')
+        plt.savefig('REALMAN_returns50.png')
         # print("Log saved!")
 
-        with open('REALMAN_returns11.txt', 'w') as f:
-            for step, value in zip(STEP, RETURN):
+        with open('REALMAN_returns50.txt', 'w') as f:
+            for step, value in zip(self.steps, self.returns):
                 f.write("{}\t{}\n".format(step, value))
 
 
 if __name__ == '__main__':
-
-
-    RETURN = []
-    STEP = []
-
     # address='auto', _redis_password='5241590000000000', 
+    # ray.init(address='10.0.0.22:8000', _redis_password='5241590000000000')
     ray.init()
     trainer = ppo.PPOTrainer(env=DiamondCollector, config={
         'env_config': {},           # No environment parameters to configure
         'framework': 'torch',       # Use pyotrch instead of tensorflow
-        'num_gpus': 0,              # We aren't using GPUs
-        'num_workers': 3,
+        'num_gpus': 0.03,              # We aren't using GPUs
+        'num_workers': 0,
         # "evaluation_num_episodes": 1,
         "train_batch_size": 500,
-        'lr' : 0.001
-        # 'memory' : 3.2e+10,
-        # "memory_per_worker": 1.024e+9,
+        "lr":0.001
 
                   # We aren't using parallelism
     })
     train_time = 1
-    file = open("trainLog.txt","w")
+    file = open("trainLog50.txt","w")
     file.write("Start\n")
     file.close()
     while True:
         log = trainer.train()
-        file = open("trainLog.txt","a")
+        file = open("trainLog50.txt","a")
         file.write("------------Train Time: "+str(train_time)+"---------\n\n\n")
         file.write(str(log))
         file.write("\n\n\n")
