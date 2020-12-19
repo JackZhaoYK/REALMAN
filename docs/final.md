@@ -5,7 +5,7 @@ title: Final
 
 ## Video
 
-There's a YouTube video embeded here
+<iframe width="100%" height="100%" src="https://www.youtube.com/embed/VGK9qBBzCSE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Project Summary
 
