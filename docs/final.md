@@ -46,7 +46,7 @@ if r.getValue() < 0:
 
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is one of the graph we get that shows our agent is getting smarter.
 
-![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/temp_trend.png?raw=true)
+![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/final_trend.jpg?raw=true)
 
 
 
