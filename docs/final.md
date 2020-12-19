@@ -22,9 +22,16 @@ Since the agent needs to maximize the reward which is also means to minimize the
 
 In the initial version of our game, we used Q-network with PyTorch and a completely randomized map as our environment. The result is clear that the agent was learning to go down the hill gradually but it was not very smart because the size of our observation space was too big and negative rewards were not optimized. With that model as a baseline, we change the algorithm to PPO(Proximal Policy Optimization) using rllib with discrate movement. 
 
+### 1. PPO
+
 Using PPO allows us to use parallelism which could increase our learning speed by training several agents at the same time, and PPO also provides a more stable result compare to the Q-network we used earlier but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will use several steps to turn around instead of one movement, so we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", we noticed our learning speed is still quite slow. After discussing with our TA, we shrink our observation space from a vector that contains 4000 elements to a vector that only contains 735 elements. 
 
 At the meantime, we adjust our falling rewards by removing the reward of reaching the bottom and increase the reward for each level the agent manages to get down. Bugs are being fixed like miscalculating rewards while the agent is in the air. The log frequency was adjusted a few times to show the trend of improvement, and that part is displayed in the video.
+
+### 2. Map setup
+
+In out first version of the game, we used 2D map as our environment. Since we want to let the agent learn a universial strategy against all kinds of map, we upgraded to a 3D map. Each stair is a 2x2 square, and we made sure each level has three stairs which allows the agent won't encounter a situation where all possible ways lead to a negative reward. Agent are free to move in four directions.
+
 
 
 ## Evaluation
@@ -33,7 +40,7 @@ Evaluating the performance for our project is fairly simple, just calculate the 
 
 ```python
 def falling_reward(self, cur, prev):
-    falldown = prev[1] - cur[1] # One level is (prev[1] - cur[1])/3
+    falldown = prev[1] - cur[1]
 
     return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 ```
@@ -51,9 +58,13 @@ if r.getValue() < 0:
 ...
 ```
 
+In addition to the reward graph, we also graph the loss function
+
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that shows our agent is getting smarter for getting more points as training goes on.
 
 ![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/final_trend.jpg?raw=true)
+
+
 
 
 
