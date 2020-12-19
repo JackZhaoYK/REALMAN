@@ -52,11 +52,11 @@ if r.getValue() < 0:
 ```
 
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is one of the graph we get that shows our agent is getting smarter.
-![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/final_trend.jpg?raw=true)
+<div style="text-align:center;"><img src="./img/final_trend.jpg" alt="image"></div>
 
+<div style="text-align:center;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="107px" viewBox="-0.5 -0.5 107 111"  style="max-width:100%;max-height:111px;"><defs/><g><path d="M 11 0 L 21 0 L 21 90.5 L 31.5 90.5 L 16 109.5 L 0.5 90.5 L 11 90.5 Z" fill="#30d158" stroke="#000000" stroke-linejoin="round" stroke-miterlimit="10" pointer-events="all"/><rect x="26" y="30" width="80" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 78px; height: 1px; padding-top: 40px; margin-left: 27px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: all; white-space: normal; word-wrap: normal; ">Change data frequency</div></div></div></foreignObject><text x="66" y="44" fill="#000000" font-family="Helvetica" font-size="12px" text-anchor="middle">Change data f...</text></switch></g></g><switch><g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/><a transform="translate(0,-5)" xlink:href="https://desk.draw.io/support/solutions/articles/16000042487" target="_blank"><text text-anchor="middle" font-size="10px" x="50%" y="100%">Viewer does not support full SVG 1.1</text></a></switch></svg></div>
 
-
-
+<div style="text-align:center;"><img src="./img/freq50Trend.png" alt="image"></div>
 
 
 ## References
