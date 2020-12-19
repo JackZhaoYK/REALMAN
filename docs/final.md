@@ -58,7 +58,10 @@ if r.getValue() < 0:
 ...
 ```
 
-In addition to the reward graph, we also graph the loss function
+In addition to the reward graph, we also graph the loss function as following, and there is a slightly decrease trend and loss function is becoming stable as training goes on.
+
+![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/2total_loss.png?raw=true)
+
 
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that shows our agent is getting smarter for getting more points as training goes on.
 
