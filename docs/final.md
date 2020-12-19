@@ -20,7 +20,11 @@ Since the agent needs to maximize the reward which is also means to minimize the
 
 ## Approaches
 
-In the initial version of our game, we used Q-network with PyTorch and a completely randomized map as our environment. The result is clear that the agent was learning to go down the hill gradually but it was not very smart because the size of our observation space was too big and negative rewards were not optimized. With that model as a baseline, we change the algorithm to PPO(Proximal Policy Optimization) using rllib with continuous movement. Using PPO allows us to use parallelism which could increase our learning speed by training several agents at the same time, and PPO also provides a more stable result compare to the Q-network we used earlier but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will use several steps to turn around instead of one movement, so we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", we noticed our learning speed is still quite slow. After discussing with our TA, we shrink our observation space from a vector that contains 4000 elements to a vector that only contains 735 elements. In the meantime, we adjust our falling rewards by removing the reward of reaching the bottom and increase the reward for each level the agent manages to get down. Bugs are being fixed like miscalculating rewards while the agent is in the air. The log frequency was adjusted a few times to show the trend of improvement, and that part is displayed in the video.
+In the initial version of our game, we used Q-network with PyTorch and a completely randomized map as our environment. The result is clear that the agent was learning to go down the hill gradually but it was not very smart because the size of our observation space was too big and negative rewards were not optimized. With that model as a baseline, we change the algorithm to PPO(Proximal Policy Optimization) using rllib with discrate movement. 
+
+Using PPO allows us to use parallelism which could increase our learning speed by training several agents at the same time, and PPO also provides a more stable result compare to the Q-network we used earlier but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will use several steps to turn around instead of one movement, so we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", we noticed our learning speed is still quite slow. After discussing with our TA, we shrink our observation space from a vector that contains 4000 elements to a vector that only contains 735 elements. 
+
+At the meantime, we adjust our falling rewards by removing the reward of reaching the bottom and increase the reward for each level the agent manages to get down. Bugs are being fixed like miscalculating rewards while the agent is in the air. The log frequency was adjusted a few times to show the trend of improvement, and that part is displayed in the video.
 
 
 ## Evaluation
@@ -37,11 +41,14 @@ def falling_reward(self, cur, prev):
 Other than the penalty of dropping more than five floors, repeatedly touching the map boundary will result in a negative reward as the following XML code. Since the agent has its height, every time it touches the boundary will result in touching two glass blocks, so we change the negative reward to -1 in our reward function.
 
 ```python
+...
 <Block type="glass" reward="-0.3"/>
+...
 
-
+...
 if r.getValue() < 0:
                 reward += -1
+...
 ```
 
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is one of the graph we get that shows our agent is getting smarter.
