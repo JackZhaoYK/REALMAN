@@ -90,7 +90,7 @@ We found that using PPO with parallelism could save us a lot of time for trainin
 ### 3. Map setup
 In out first version of the game, we used 2D map as our environment for efficient implementation. However, since we want to let the agent learn a universial strategy against all kinds of map, we upgraded to a 3D map. Each stair is a 2x2 square, and we made sure each level has three stairs which allows the agent won't encounter a situation where all possible ways lead to a negative reward. Agent are free to move in four directions.
 <p>
-    <img src="./img/possibility.png"  height="85%" width="85%"/>
+    <img src="./img/possibility.png"  height="75%" width="75%"/>
     <br>
     <em>Fig. 4: Chance of meeting cliffs</em>
 </p>
@@ -131,7 +131,7 @@ if r.getValue() < 0:
 ### Qualitative Method
 In addition to the reward graph, we also graph the loss function as following, and there is a slightly decrease trend and loss function is becoming stable as training goes on.
 <p>
-    <img src="./img/2total_loss.png"  height="75%" width="75%"/>
+    <img src="./img/2total_loss.png"  height="60%" width="60%"/>
     <br>
     <em>Fig. 6: Graph of loss function result</em>
 </p>
