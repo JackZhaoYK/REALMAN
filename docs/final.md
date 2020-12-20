@@ -66,7 +66,7 @@ In addition to the reward graph, we also graph the loss function as following, a
 ![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/2total_loss.png?raw=true)
 
 
-In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that shows our agent is getting smarter for getting more points as training goes on.
+Another qualitative measure is that the agent is expected to have higher rewards as more training are performed, and higher reward means less falling damage and more valid floor drops. After thousands of episodes, we can see our agent stopped repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that can show our agent is getting smarter as training goes on.
 
 <div style="text-align:center;"><img src="./img/final_trend.jpg" alt="image"></div>
 
