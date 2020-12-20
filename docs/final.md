@@ -20,15 +20,12 @@ Since the agent needs to maximize the reward which is also means to minimize the
 
 ## Approaches
 
-We expect our agent to learn how to get down the hill with maximum reward, so we set up the following reward for each type of possible interaction in game.
-Reward  $$ R(s)=\left{ \begin{aligned} 3 &\ (\text{ When the agent goes down the hill less than five floors at a time})\ -1 &\ (\text{For time the agent touch map boundry})\ -15 &\ (\text{When the agent go down the hill more than 5 floors a time})\ \end{aligned} \right. $$
+The first approach we tried was using Deep Q-network and a completely randomized map as our environment, and DQN gives a very clear result that the agent was learning to go down the hill gradually. However, DQN runs quite slow so we have to make the agent wait a second or two to wait for the result comes our, otherwise the agent will choose a step randomly. It took us a lot of time experimenting different weight for rewards, and the result was not significantly improved. After brainstorming about the situation, we decided to go with PPO(Proximal Policy Optimization) with rllib and ray to make a multi-agent environment. Running multiple agents parallel can significantly increase our training speed because there are more episodes being trained at the same time, and we don't have to wait for seconds each step since PPO uses sampling to determine the weight of following steps.
 
-
-. With that model as a baseline, we change the algorithm to PPO(Proximal Policy Optimization) using rllib with discrate movement. 
 
 ### 1. PPO
 
-Using PPO allows us to use parallelism which could increase our learning speed by training several agents at the same time, and PPO also provides a more stable result compare to the Q-network we used earlier but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will use several steps to turn around instead of one movement, so we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", we noticed our learning speed is still quite slow. After discussing with our TA, we shrink our observation space from a vector that contains 4000 elements to a vector that only contains 735 elements. 
+Using PPO allows us to use parallelism which could increase our learning speed by training several agents at the same time, and PPO also provides a more stable result compare to the Q-network we used earlier but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will use several steps to turn around instead of one movement, so we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", "lr" and "evaluation_num_episodes", we wish our learning speed can be accelerated a bit more. After discussing with our TA, we shrink our observation space from a vector that contains 4000 elements to a vector that only contains 735 elements. 
 
 At the meantime, we adjust our falling rewards by removing the reward of reaching the bottom and increase the reward for each level the agent manages to get down. Bugs are being fixed like miscalculating rewards while the agent is in the air. The log frequency was adjusted a few times to show the trend of improvement, and that part is displayed in the video.
 
@@ -48,7 +45,6 @@ def falling_reward(self, cur, prev):
 
     return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 ```
-![rewardFunc](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/rewardFunction.png?raw=true)
 
 Other than the penalty of dropping more than five floors, repeatedly touching the map boundary will result in a negative reward as the following XML code. Since the agent has its height, every time it touches the boundary will result in touching two glass blocks, so we change the negative reward to -1 in our reward function.
 
@@ -65,7 +61,7 @@ if r.getValue() < 0:
 
 In addition to the reward graph, we also graph the loss function as following, and there is a slightly decrease trend and loss function is becoming stable as training goes on.
 
-<div style="text-align:center;"><img src="./img/2total_loss.png" alt="image"></div>
+![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/2total_loss.png?raw=true)
 
 
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that shows our agent is getting smarter for getting more points as training goes on.
