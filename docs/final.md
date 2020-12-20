@@ -44,6 +44,7 @@ def falling_reward(self, cur, prev):
 
     return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 ```
+![rewardFunc](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/rewardFunction.png?raw=true)
 
 Other than the penalty of dropping more than five floors, repeatedly touching the map boundary will result in a negative reward as the following XML code. Since the agent has its height, every time it touches the boundary will result in touching two glass blocks, so we change the negative reward to -1 in our reward function.
 
