@@ -172,13 +172,9 @@ class DiamondCollector(gym.Env):
         reward = 0
         if self.cur_pos[1] < 3:
             self.reached = True
-        # if self.temp_pos == self.cur_pos:
+        
         reward += self.falling_reward(self.cur_pos, self.prev_pos)
         self.prev_pos = self.cur_pos
-        # else:
-        #     time.sleep(1)
-            # print("Diff: CUR: {}, PREV: {}".format(self.cur_pos, self.temp_pos))
-        # cur_reward =[]
 
         for r in world_state.rewards:
             if r.getValue() < 0:
@@ -431,17 +427,16 @@ if __name__ == '__main__':
     # address='auto', _redis_password='5241590000000000', 
     # ray.init(address='10.0.0.22:8000', _redis_password='5241590000000000')
     ray.init()
+
     trainer = ppo.PPOTrainer(env=DiamondCollector, config={
         'env_config': {},           # No environment parameters to configure
         'framework': 'torch',       # Use pyotrch instead of tensorflow
-        'num_gpus': 0.03,              # We aren't using GPUs
-        'num_workers': 0,
-        # "evaluation_num_episodes": 1,
-        "train_batch_size": 500,
+        'num_gpus': 0.03,              # We aren't using GPUs now
+        'num_workers': 0,              # We aren't using parallelism now
+        "train_batch_size": 500,       # shrink bacth size for more learnings
         "lr":0.001
-
-                  # We aren't using parallelism
     })
+    
     train_time = 1
     file = open("trainLog50.txt","w")
     file.write("Start\n")

@@ -4,3 +4,15 @@ Different from path searching game and item collecting game, we are trying to bu
 
 
  
+
+之前的function
+DQN\ Falling(falldown) =\left\{\begin{matrix}
+-15 & ,falldown > 5\\ 
+3*falldown & ,falldown <=5 \\ 
+\end{matrix}\right.
+
+DQN\ Reward =\left\{\begin{matrix}
+DQN Faliing & when\ falling\ down\\ 
++100 & ,when\ reaching\ bottom \\ 
+-1 &,when\ touching\ boundary\\
+\end{matrix}\right.
