@@ -30,16 +30,19 @@ title: Final
 
 ### 0. DQN
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The first approach we tried was using Deep Q-network(DQN) and a completely randomized map as our environment, different rewards are given when the agent getting down the hill, reaching the bottom, or touching the map boundry. 
+<br>
 <p style="text-align:center;">
     <img src="./img/DQNF1.png" height="75%" width="75%"/>
     <br>
     <em>Fig. 2: Falling Rward Function</em>
 </p>
+<br>
 <p style="text-align:center;">
     <img src="./img/DQNF2.png"  height="75%" width="75%"/>
     <br>
     <em>Fig.3: Rward Functions in DQN Model</em>
 </p>
+<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DQN gives a very clear result that the agent was learning to go down the hill gradually. However, DQN runs quite unstably so we have to make the agent wait for a second or two to wait for the result to come, otherwise, the agent will choose a step randomly. It took us a lot of time experimenting with different weights for rewards, and the result was not significantly improved. With DQN as our baseline, we want the agent to do better.
 
@@ -48,7 +51,7 @@ title: Final
 
 ### 1. PPO
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PPO provides a more stable result compare to the Deep Q-network but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will still moving when they are supposed to stop the movement for one second in some cases. So we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", "lr" and "evaluation_num_episodes", we wish our learning speed can be accelerated a bit more. 
-
+<br>
 ```python
 trainer = ppo.PPOTrainer(env=DiamondCollector, config={
     'env_config': {},           # No environment parameters to configure
@@ -60,10 +63,13 @@ trainer = ppo.PPOTrainer(env=DiamondCollector, config={
 })
 ```
 <em>Code. 1: Parameter tuning for PPO trainer</em>
-
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After discussing with our TA, we shrink our observation space from a vector that contains 4000 elements to a vector that only contains 735 elements, and we removed the reward when the agent reaching the bottom since there is no limit on steps the agent can use and it makes the agent less sensitive to the falling reward. At the meantime, we increased the reward for each level the agent manages to get down, which would stimulate the agent to jump more floors as it can. 
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bugs are being fixed like miscalculating rewards while the agent is in the air by using the algorithm below. In specific, we obtained the agent position twice in a single step to calculate the difference. If the agent is falling, the position difference will be passed to our falling functin for next reward calculation.
+
+<br>
+
 ```python
 time.sleep(0.1)
 self.obs, self.temp_pos = self.get_observation(world_state)
@@ -80,7 +86,10 @@ if self.cur_pos[1] < 3:
 reward += self.falling_reward(self.cur_pos, self.prev_pos)
 self.prev_pos = self.cur_pos
 ```
+
 *Code. 2: Locating the agent in the air*
+
+<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The log frequency was adjusted a few times to show the trend of improvement, and that part is displayed in the video.
 
@@ -89,11 +98,13 @@ self.prev_pos = self.cur_pos
 
 ### 3. Map setup
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In out first version of the game, we used 2D map as our environment for efficient implementation. However, since we want to let the agent learn a universial strategy against all kinds of map, we upgraded to a 3D map. Each stair is a 2x2 square, and we made sure each level has three stairs which allows the agent won't encounter a situation where all possible ways lead to a negative reward. Agent are free to move in four directions.
+<br>
 <p style="text-align:center;">
     <img src="./img/possibility.png"  height="75%" width="75%"/>
     <br>
     <em>Fig. 4: Chance of meeting cliffs</em>
 </p>
+<br>
 
 
 
@@ -102,6 +113,8 @@ self.prev_pos = self.cur_pos
 ### Quantitative Method
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Evaluating the performance for our project is fairly simple, just calculate the reward the agent successfully goes down minus the damage it takes in the process. Based on the need of our model, we have adjusted the weight several times. The quantitative measure would be the final score the agent gets. In that case, rewards are given for each level the player goes down and a dynamic reward is given based on the number of levels the agent gets down. Below is our reward function and the reward is increased for each additional level it falls. Once the agent goes beyond five floors, a negative reward is given.
 
+<br>
+
 ```python
 def falling_reward(self, cur, prev):
     falldown = prev[1] - cur[1]
@@ -109,14 +122,16 @@ def falling_reward(self, cur, prev):
     return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 ```
 *Code. 3: Reward function*
-<br/>
+<br>
 <p style="text-align:center;">
     <img src="./img/rewardFunction.png"  height="75%" width="75%"/>
     <br>
     <em>Fig. 5: Current reward function for PPO Model</em>
 </p>
-<br/>
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Other than the penalty of dropping more than five floors, repeatedly touching the map boundary will result in a negative reward as the following XML code. Since the agent has its height, every time it touches the boundary will result in touching two glass blocks, so we change the negative reward to -1 in our reward function.
+<br>
+<br>
 
 ```python
 ...
@@ -132,14 +147,17 @@ if r.getValue() < 0:
 
 ### Qualitative Method
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In addition to the reward graph, we also graph the loss function as following, and there is a slightly decrease trend and loss function is becoming stable as training goes on.
-<p>
+
+<br>
+
+<p style="text-align:center;">
     <img src="./img/2total_loss.png"  height="60%" width="60%"/>
     <br>
     <em>Fig. 6: Graph of loss function result</em>
 </p>
-
+<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that shows our agent is getting smarter for getting more points as training goes on.
-
+<br>
 <div style="text-align:center;"><img src="./img/final_trend.jpg" alt="image"></div>
 
 
@@ -147,7 +165,7 @@ if r.getValue() < 0:
 <div style="text-align:center;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="107px" viewBox="-0.5 -0.5 107 111"  style="max-width:100%;max-height:111px;"><defs/><g><path d="M 11 0 L 21 0 L 21 90.5 L 31.5 90.5 L 16 109.5 L 0.5 90.5 L 11 90.5 Z" fill="#30d158" stroke="#000000" stroke-linejoin="round" stroke-miterlimit="10" pointer-events="all"/><rect x="26" y="30" width="80" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 78px; height: 1px; padding-top: 40px; margin-left: 27px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: all; white-space: normal; word-wrap: normal; ">Change data frequency</div></div></div></foreignObject><text x="66" y="44" fill="#000000" font-family="Helvetica" font-size="12px" text-anchor="middle">Change data f...</text></switch></g></g><switch><g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/><a transform="translate(0,-5)" xlink:href="https://desk.draw.io/support/solutions/articles/16000042487" target="_blank"><text text-anchor="middle" font-size="10px" x="50%" y="100%">Viewer does not support full SVG 1.1</text></a></switch></svg></div>
 
 <div style="text-align:center;"><img src="./img/freq50Trend.png" alt="image"></div>
-
+<br>
 
 
 
