@@ -43,7 +43,7 @@ After brainstorming about the situation, we decided to go with PPO(Proximal Poli
 
 
 ### 1. PPO
-PPO provides a more stable result compare to the Deep Q-network but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will use several steps to turn around instead of one movement, so we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", "lr" and "evaluation_num_episodes", we wish our learning speed can be accelerated a bit more. 
+PPO provides a more stable result compare to the Deep Q-network but at a cost of more training steps required. Initially, we used continuous movement in our environment, but the agent will still moving when they are supposed to stop the movement for one second in some cases. So we decided to use discrete movement instead. After adjusting all kinds of parameters like "sample_batch_size", "lr" and "evaluation_num_episodes", we wish our learning speed can be accelerated a bit more. 
 
 ```python
 trainer = ppo.PPOTrainer(env=DiamondCollector, config={
