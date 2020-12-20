@@ -7,6 +7,8 @@ title: Final
 
 <div style="text-align:center;"><iframe width="560" height="315" src="https://www.youtube.com/embed/VGK9qBBzCSE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
 
+
+
 ## Project Summary
 
 In the modern world, people use autonomous robots to do some work. Autonomous vacuum robots today commonly exist in many homes, it uses sensors for obstacle detection, a new feature of cliff detection has been used as an additional sensing technology for safety. Under the development of technology, we believe that auto vacuum robots should have the ability to detect cliff and down the stairs safely. 
@@ -21,18 +23,20 @@ Since the agent needs to maximize the reward which is also means to minimize the
 <em>Fig.1: Expected agent's behavior</em></div>
 
 
+
 ## Approaches
+
 Throughout the project process, we iterated a variety of algorithms and reward models, and the results obtained were also completely different.
 
 ### 0. DQN
 The first approach we tried was using Deep Q-network(DQN) and a completely randomized map as our environment, different rewards are given when the agent getting down the hill, reaching the bottom, or touching the map boundry. 
 <p>
-    <img src="./img/DQNF1.png"/>
+    <img src="./img/DQNF1.png" height="75%" width="75%"/>
     <br>
     <em>Fig. 2: Falling Rward Function</em>
 </p>
 <p>
-    <img src="./img/DQNF2.png"/>
+    <img src="./img/DQNF2.png"  height="75%" width="75%"/>
     <br>
     <em>Fig.3: Rward Functions in DQN Model</em>
 </p>
@@ -58,11 +62,6 @@ trainer = ppo.PPOTrainer(env=DiamondCollector, config={
 <em>Code. 1: Parameter tuning for PPO trainer</em>
 
 After discussing with our TA, we shrink our observation space from a vector that contains 4000 elements to a vector that only contains 735 elements, and we removed the reward when the agent reaching the bottom since there is no limit on steps the agent can use and it makes the agent less sensitive to the falling reward. At the meantime, we increased the reward for each level the agent manages to get down, which would stimulate the agent to jump more floors as it can. 
-<p>
-    <img src="./img/rewardFunction.png"/>
-    <br>
-    <em>Fig. 4: Current reward function for PPO Model</em>
-</p>
 
 Bugs are being fixed like miscalculating rewards while the agent is in the air by using the algorithm below. In specific, we obtained the agent position twice in a single step to calculate the difference. If the agent is falling, the position difference will be passed to our falling functin for next reward calculation.
 ```python
@@ -88,14 +87,20 @@ The log frequency was adjusted a few times to show the trend of improvement, and
 ### 2.PPO Extension
 We found that using PPO with parallelism could save us a lot of time for training because it merge contribution of each worker for each time of learning. However, due to ability of our PCs, the performance of multiple workers was worse than that of a single worker.
 
-### 2. Map setup
-In out first version of the game, we used 2D map as our environment. Since we want to let the agent learn a universial strategy against all kinds of map, we upgraded to a 3D map. Each stair is a 2x2 square, and we made sure each level has three stairs which allows the agent won't encounter a situation where all possible ways lead to a negative reward. Agent are free to move in four directions.
+### 3. Map setup
+In out first version of the game, we used 2D map as our environment for efficient implementation. However, since we want to let the agent learn a universial strategy against all kinds of map, we upgraded to a 3D map. Each stair is a 2x2 square, and we made sure each level has three stairs which allows the agent won't encounter a situation where all possible ways lead to a negative reward. Agent are free to move in four directions.
+<p>
+    <img src="./img/possibility.png"  height="75%" width="75%"/>
+    <br>
+    <em>Fig. 4: Chance of meeting cliffs</em>
+</p>
 
 
 
 ## Evaluation
 
-Evaluating the performance for our project is fairly simple, just calculate the levels the agent successfully goes down minus the damage it takes in the process. Based on the need of our model, we have adjusted the weight several times. The quantitative measure would be the final score the agent gets. In that case, rewards are given for each level the player goes down and a dynamic reward is given based on the number of levels the agent gets down. Below is our reward function and the reward is increased for each additional level it falls. Once the agent goes beyond five floors, a negative reward is given.
+### Quantitative Method
+Evaluating the performance for our project is fairly simple, just calculate the reward the agent successfully goes down minus the damage it takes in the process. Based on the need of our model, we have adjusted the weight several times. The quantitative measure would be the final score the agent gets. In that case, rewards are given for each level the player goes down and a dynamic reward is given based on the number of levels the agent gets down. Below is our reward function and the reward is increased for each additional level it falls. Once the agent goes beyond five floors, a negative reward is given.
 
 ```python
 def falling_reward(self, cur, prev):
@@ -103,7 +108,12 @@ def falling_reward(self, cur, prev):
 
     return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 ```
-
+*Code. 3: Reward function*
+<p>
+    <img src="./img/rewardFunction.png"  height="75%" width="75%"/>
+    <br>
+    <em>Fig. 5: Current reward function for PPO Model</em>
+</p>
 Other than the penalty of dropping more than five floors, repeatedly touching the map boundary will result in a negative reward as the following XML code. Since the agent has its height, every time it touches the boundary will result in touching two glass blocks, so we change the negative reward to -1 in our reward function.
 
 ```python
@@ -116,11 +126,15 @@ if r.getValue() < 0:
                 reward += -1
 ...
 ```
+*Code. 4: Penalty of touching boundary*
 
+### Qualitative Method
 In addition to the reward graph, we also graph the loss function as following, and there is a slightly decrease trend and loss function is becoming stable as training goes on.
-
-![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/2total_loss.png?raw=true)
-
+<p>
+    <img src="./img/2total_loss.png"  height="60%" width="60%"/>
+    <br>
+    <em>Fig. 6: Graph of loss function result</em>
+</p>
 
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that shows our agent is getting smarter for getting more points as training goes on.
 
