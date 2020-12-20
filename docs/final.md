@@ -48,6 +48,7 @@ def falling_reward(self, cur, prev):
 
     return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 ```
+![rewardFunc](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/rewardFunction.png?raw=true)
 
 Other than the penalty of dropping more than five floors, repeatedly touching the map boundary will result in a negative reward as the following XML code. Since the agent has its height, every time it touches the boundary will result in touching two glass blocks, so we change the negative reward to -1 in our reward function.
 
@@ -64,7 +65,7 @@ if r.getValue() < 0:
 
 In addition to the reward graph, we also graph the loss function as following, and there is a slightly decrease trend and loss function is becoming stable as training goes on.
 
-![result_image](https://github.com/JackZhaoYK/REALMAN/blob/main/docs/img/2total_loss.png?raw=true)
+<div style="text-align:center;"><img src="./img/2total_loss.png" alt="image"></div>
 
 
 In qualitative measure would be the agent is expected to have higher rewards for optimization, which is considered to be a combinated evaluation of less falling damages and fewer steps. After thousands of steps, we can see our agent stop repeatedly touching the boundry and started to choose a path that gives higher rewards. Here is the reward graph we get that shows our agent is getting smarter for getting more points as training goes on.
