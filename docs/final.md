@@ -30,12 +30,12 @@ Throughout the project process, we iterated a variety of algorithms and reward m
 
 ### 0. DQN
 The first approach we tried was using Deep Q-network(DQN) and a completely randomized map as our environment, different rewards are given when the agent getting down the hill, reaching the bottom, or touching the map boundry. 
-<p>
+<p style="text-align:center;">
     <img src="./img/DQNF1.png" height="75%" width="75%"/>
     <br>
     <em>Fig. 2: Falling Rward Function</em>
 </p>
-<p>
+<p style="text-align:center;">
     <img src="./img/DQNF2.png"  height="75%" width="75%"/>
     <br>
     <em>Fig.3: Rward Functions in DQN Model</em>
@@ -89,7 +89,7 @@ We found that using PPO with parallelism could save us a lot of time for trainin
 
 ### 3. Map setup
 In out first version of the game, we used 2D map as our environment for efficient implementation. However, since we want to let the agent learn a universial strategy against all kinds of map, we upgraded to a 3D map. Each stair is a 2x2 square, and we made sure each level has three stairs which allows the agent won't encounter a situation where all possible ways lead to a negative reward. Agent are free to move in four directions.
-<p>
+<p style="text-align:center;">
     <img src="./img/possibility.png"  height="75%" width="75%"/>
     <br>
     <em>Fig. 4: Chance of meeting cliffs</em>
@@ -109,7 +109,7 @@ def falling_reward(self, cur, prev):
     return -15 if falldown >= 15 else math.ceil(falldown*falldown/10)
 ```
 *Code. 3: Reward function*
-<p>
+<p style="text-align:center;">
     <img src="./img/rewardFunction.png"  height="75%" width="75%"/>
     <br>
     <em>Fig. 5: Current reward function for PPO Model</em>
