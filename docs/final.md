@@ -20,7 +20,11 @@ Since the agent needs to maximize the reward which is also means to minimize the
 
 ## Approaches
 
-In the initial version of our game, we used Q-network with PyTorch and a completely randomized map as our environment. The result is clear that the agent was learning to go down the hill gradually but it was not very smart because the size of our observation space was too big and negative rewards were not optimized. With that model as a baseline, we change the algorithm to PPO(Proximal Policy Optimization) using rllib with discrate movement. 
+We expect our agent to learn how to get down the hill with maximum reward, so we set up the following reward for each type of possible interaction in game.
+Reward  $$ R(s)=\left{ \begin{aligned} math.ceil(levels down * levels down / 3) &\ (\text{ When the agent goes down the hill less than five floors at a time})\ -1 &\ (\text{For time the agent touch map boundry})\ -15 &\ (\text{When the agent go down the hill more than 5 floors a time})\ \end{aligned} \right. $$
+
+
+. With that model as a baseline, we change the algorithm to PPO(Proximal Policy Optimization) using rllib with discrate movement. 
 
 ### 1. PPO
 
