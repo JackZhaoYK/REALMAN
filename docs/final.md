@@ -68,8 +68,6 @@ trainer = ppo.PPOTrainer(env=DiamondCollector, config={
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bugs are being fixed like miscalculating rewards while the agent is in the air by using the algorithm below. In specific, we obtained the agent position twice in a single step to calculate the difference. If the agent is falling, the position difference will be passed to our falling functin for next reward calculation.
 
-<br>
-
 ```python
 time.sleep(0.1)
 self.obs, self.temp_pos = self.get_observation(world_state)
@@ -93,7 +91,7 @@ self.prev_pos = self.cur_pos
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The log frequency was adjusted a few times to show the trend of improvement, and that part is displayed in the video.
 
-### 2.PPO Extension
+### 2. PPO Extension
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We found that using PPO with parallelism could save us a lot of time for training because it merge contribution of each worker for each time of learning. However, due to ability of our PCs, the performance of multiple workers was worse than that of a single worker.
 
 ### 3. Map setup
@@ -162,10 +160,6 @@ if r.getValue() < 0:
 <br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In addition to the reward graph, we also graph the loss function as following. It shows that there are always a decreased trend when getting high loss function. We think the problem happens because of the ability of our PCs. We find that PPO needs more time for each step than DQN for better result. If there are enough learning times and enough steps, the return value will be better.
-
-
-<br>
-
 
 <p style="text-align:center;">
     <img src="./img/2total_loss.png"  height="60%" width="60%"/>
